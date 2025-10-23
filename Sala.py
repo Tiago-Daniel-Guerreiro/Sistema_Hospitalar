@@ -205,9 +205,7 @@ class Recepcao:
                     break
                 case _:
                     input("Opção inválida. Pressione Enter para continuar...")
-
-
-if __name__ == "__main__":
+def teste():
     atendimento_cardio1 = SalaAtendimento(101, "Cardio 1")
     atendimento_cardio2 = SalaAtendimento(102, "Cardio 2")
     atendimento_orto1 = SalaAtendimento(201, "Orto 1")
@@ -224,3 +222,6 @@ if __name__ == "__main__":
     recepcao_principal.adicionar_area("Ortopedia", espera_ortopedia)
 
     recepcao_principal.menu_principal()
+    
+if __name__ == "__main__":
+    teste()
