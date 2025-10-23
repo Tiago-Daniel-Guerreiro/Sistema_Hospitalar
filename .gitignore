@@ -1,0 +1,13 @@
+*.txt
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+
+# Virtualenv
+venv/
+env/
+
+# Editor temp files
+*.swp
+.vscode/
+.idea/
