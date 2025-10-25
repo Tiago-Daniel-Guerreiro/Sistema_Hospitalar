@@ -21,10 +21,19 @@ class Dias_Semana(Enum):
     def __int__(self):
         return self.value
     
+    @staticmethod
+    def data_para_enum(data:date):
+        dia_semana_int = data.weekday() + 1
+
+        if dia_semana_int == 7:
+            dia_semana_int = 0
+
+        return Dias_Semana(dia_semana_int)
+    
 class HoraMinuto:
     def __init__(self, hora: int, minuto: int):
-        self.hora = hora
-        self.minuto = minuto
+        self.hora = max(min(hora, 23), 0)
+        self.minuto = max(min(minuto, 59), 0)
 
     @classmethod
     def init_com_str(cls, hora_minuto_str: str):
@@ -44,17 +53,17 @@ class HoraMinuto:
     def __str__(self):
         return f"{self.hora:02d}:{self.minuto:02d}"
 
-    def __lt__(self, outra_hm): # Quando se usa <
+    def __lt__(self, outra_hm):
         return self.obter_timedelta() < outra_hm.obter_timedelta()
-
-    def __eq__(self, outra_hm): # Quando se usa ===
+    
+    def __le__(self, outra_hm):
+        return self.obter_timedelta() <= outra_hm.obter_timedelta()
+    
+    def __eq__(self, outra_hm):
         return self.obter_timedelta() == outra_hm.obter_timedelta()
 
 class IntervaloTempo:
     def __init__(self, inicio: timedelta, fim: timedelta):
-        if inicio > fim:
-            (inicio, fim) = (fim, inicio)
-
         self.inicio = inicio
         self.fim = fim
 
@@ -63,8 +72,7 @@ class IntervaloTempo:
         inicio = inicio_hm.obter_timedelta()
         fim = fim_hm.obter_timedelta()
 
-        # Se o fim é antes do início (turno noturno) ou dura 24h
-        if fim <= inicio:
+        if fim_hm < inicio_hm:
             fim += timedelta(days=1)
 
         return cls(inicio, fim)
@@ -75,6 +83,7 @@ class IntervaloTempo:
     def esta_dentro_do_limite(self, limite: 'IntervaloTempo') -> bool:
         if limite is None:
             return True
+        
         return self.inicio >= limite.inicio and self.fim <= limite.fim
 
     @staticmethod
@@ -109,12 +118,18 @@ class Pausas:
                 return False
             
         self.pausas.append(nova_pausa)
-        self.pausas.sort(key=lambda p: p.inicio)
+        self.pausas.sort(key=lambda pausa: pausa.inicio)
         return True
     
     def atualizar_limite(self, novo_limite: IntervaloTempo):
         self.limite = novo_limite
-        self.pausas = [p for p in self.pausas if p.esta_dentro_do_limite(novo_limite)]
+        novas_pausas = []
+
+        for pausa in self.pausas:
+            if(pausa.esta_dentro_do_limite(novo_limite)):
+                novas_pausas.append(pausa)
+
+        self.pausas = novas_pausas
 
 class Horario:
     def __init__(self, intervalo: IntervaloTempo, pausas: list = None):
@@ -135,7 +150,6 @@ class Horario:
     def _obter_segmentos_trabalho(self) -> list:
         segmentos = []
         inicio_seg = self.inicio
-
         for pausa in self._pausas.pausas:
             if inicio_seg < pausa.inicio:
                 segmentos.append(IntervaloTempo(inicio_seg, pausa.inicio))
@@ -152,19 +166,13 @@ class Horario:
         um_dia = timedelta(days=1)
         dois_dias = timedelta(days=2)
 
-        # Noturno do primeiro dia (ex: 22:00 a 24:00)
         intervalos_noturnos.append(IntervaloTempo(Inicio_Turno_noturno, um_dia))
-        # Noturno da manhã do dia seguinte (ex: 00:00 a 07:00)
         intervalos_noturnos.append(IntervaloTempo(um_dia, um_dia + Fim_Turno_noturno))
         
-        # Se o turno de trabalho se estende por mais de um dia
         if self.fim > um_dia:
-            # Noturno da noite do segundo dia (ex: 22:00 de D+1 a 24:00 de D+1)
             intervalos_noturnos.append(IntervaloTempo(um_dia + Inicio_Turno_noturno, dois_dias))
-            # Noturno da manhã do terceiro dia (ex: 00:00 de D+2 a 07:00 de D+2)
             intervalos_noturnos.append(IntervaloTempo(dois_dias, dois_dias + Fim_Turno_noturno))
 
-        # Noturno da manhã do primeiro dia (ex: 00:00 a 07:00)
         intervalos_noturnos.append(IntervaloTempo(dia_zero, Fim_Turno_noturno))
         
         return intervalos_noturnos
@@ -201,7 +209,7 @@ class Horario_Semanal:
                 total_trabalhado += horario.tempo_trabalhado()
                 total_diurno += horario.calcular_tempo_diurno()
                 total_noturno += horario.calcular_tempo_noturno()
-         
+        
         return {
             "trabalhado": total_trabalhado,
             "diurno": total_diurno,
@@ -214,13 +222,15 @@ class Horario_Mensal:
             agora = datetime.now()
             ano = agora.year
             mes = agora.month
+        
+        if horario_semanal is None:
             horario_semanal = Horario_Semanal()
 
         self.ano = ano
         self.mes = mes
         self.horario_semanal = horario_semanal      
 
-    def obter_detalhes_Mensais(self) -> str:
+    def obter_detalhes_Mensais(self) -> dict:
         total_trabalhado = timedelta()
         total_diurno = timedelta()
         total_noturno = timedelta()
@@ -230,29 +240,19 @@ class Horario_Mensal:
 
         for i in range(num_dias):
             data_atual = data_inicial + timedelta(days=i)
-            
-            dia_da_semana_vindo_da_data = data_atual.weekday() + 1
-            if dia_da_semana_vindo_da_data == 7:
-                dia_da_semana_vindo_da_data = 0
-            dia_da_semana_enum = Dias_Semana(dia_da_semana_vindo_da_data)
-        
-            horario_do_dia = self.horario_semanal.horarios.get(dia_da_semana_enum)
+            dia_semana_enum = Dias_Semana.data_para_enum(data_atual)
+            horario_do_dia = self.horario_semanal.horarios[dia_semana_enum]
 
             if horario_do_dia:
                 total_trabalhado += horario_do_dia.tempo_trabalhado()
                 total_diurno += horario_do_dia.calcular_tempo_diurno()
                 total_noturno += horario_do_dia.calcular_tempo_noturno()
         
-        resultado = {
+        return {
             "trabalhado": total_trabalhado,
             "diurno": total_diurno,
             "noturno": total_noturno
         }
-
-        saida_formatada = f"{self.mes}/{self.ano}:\n"
-        for key, valor in resultado.items():
-            saida_formatada += f"  {key.capitalize()}: {valor}\n"
-        return saida_formatada
     
     def obter_detalhes_Diarios(self) -> list:
         detalhes_dict = {}
@@ -269,19 +269,13 @@ class Horario_Mensal:
                     continue
 
                 data_atual = date(self.ano, self.mes, dia_do_mes)
-
-                dia_da_semana_vindo_da_data = data_atual.weekday() + 1
-                if dia_da_semana_vindo_da_data == 7:
-                    dia_da_semana_vindo_da_data = 0
-
-                dia_da_semana_enum = Dias_Semana(dia_da_semana_vindo_da_data)
-                
-                horario_do_dia = self.horario_semanal.horarios.get(dia_da_semana_enum)
+                dia_semana_atual = Dias_Semana.data_para_enum(data_atual)
+                horario_do_dia = self.horario_semanal.horarios[dia_semana_atual]
 
                 if horario_do_dia:
                     detalhes_dict[num_semana].append({
                         "data": data_atual,
-                        "dia_semana": dia_da_semana_enum.name,
+                        "dia_semana": dia_semana_atual.name,
                         "trabalhado": horario_do_dia.tempo_trabalhado(),
                         "diurno": horario_do_dia.calcular_tempo_diurno(),
                         "noturno": horario_do_dia.calcular_tempo_noturno()
@@ -305,6 +299,7 @@ class Horario_Mensal:
             saida_formatada.append(semana_formatada)
             
         return saida_formatada
+    
     def obter_detalhes_Semanais(self) -> list:
         saida_formatada = []
         calendar.setfirstweekday(calendar.SUNDAY)
@@ -321,15 +316,7 @@ class Horario_Mensal:
                     continue
 
                 data_atual = date(self.ano, self.mes, dia_do_mes)
-
-                dia_da_semana_vindo_da_data = data_atual.weekday() + 1
-
-                if(dia_da_semana_vindo_da_data==7):
-                    dia_da_semana_vindo_da_data = 0
-
-                dia_da_semana_enum = Dias_Semana(dia_da_semana_vindo_da_data)
-                
-                horario_do_dia = self.horario_semanal.horarios.get(dia_da_semana_enum)
+                horario_do_dia = self.horario_semanal.horarios[Dias_Semana.data_para_enum(data_atual)]
 
                 if horario_do_dia:
                     dias_trabalhados_na_semana.append(data_atual)
@@ -351,128 +338,153 @@ class Horario_Mensal:
                 saida_formatada.append(semana_str)
                 
         return saida_formatada
+
+class FuncionarioHorario:
+    def __init__(self, horario_semanal_base: Horario_Semanal):
+        self.horario_semanal_base = horario_semanal_base
+        self.horarios_especificos = {}
+        self.registros_diarios = {}
+        
+        self._horario_mensal_atual = None
+        self._mes_atual = None
+        self._ano_atual = None
+
+    @property
+    def horario_mensal(self) -> Horario_Mensal:
+        mes = datetime.now().month
+        ano = datetime.now().year
+        
+        if (self._horario_mensal_atual is None or 
+            self._mes_atual != mes or 
+            self._ano_atual != ano):
+            self._horario_mensal_atual = Horario_Mensal(ano, mes, self.horario_semanal_base)
+            self._mes_atual = mes
+            self._ano_atual = ano
+        
+        return self._horario_mensal_atual
     
-def teste():
-    # Teste do Horario Mensal
-    horario_semanal = Horario_Semanal()
-    horario_0 = Horario (
-        intervalo = IntervaloTempo.init_com_HoraMinuto(
-            inicio_hm = HoraMinuto.init_com_str("09:00"),
-            fim_hm = HoraMinuto.init_com_str("19:00")
-        ),
-        pausas = [
-            IntervaloTempo.init_com_HoraMinuto (
-                HoraMinuto.init_com_str("12:30"),
-                HoraMinuto.init_com_str("13:30"),
-            ),
-        ]
-    )    
+    def obter_horario_mensal(self, mes: int = None, ano: int = None) -> Horario_Mensal:
+        if mes is None:
+            mes = datetime.now().month
+        if ano is None:
+            ano = datetime.now().year
+        
+        if (self._horario_mensal_atual and 
+            self._mes_atual == mes and 
+            self._ano_atual == ano):
+            return self._horario_mensal_atual
+        
+        return Horario_Mensal(ano, mes, self.horario_semanal_base)
 
-    horario_1 = Horario(
-        intervalo = IntervaloTempo.init_com_HoraMinuto (
-            inicio_hm = HoraMinuto.init_com_str("11:05"),
-            fim_hm = HoraMinuto.init_com_str("23:05")
-        ),
-        pausas = [
-            IntervaloTempo.init_com_HoraMinuto (
-                HoraMinuto.init_com_str("13:15"),
-                HoraMinuto.init_com_str("14:15")
-            )
-        ]
-    )
+    def definir_horario_especifico(self, data: date, horario: Horario):
+        self.horarios_especificos[data] = horario
 
-    horario_2 = Horario (
-        intervalo = IntervaloTempo.init_com_HoraMinuto (
-            inicio_hm = HoraMinuto.init_com_str("10:30"),
-            fim_hm = HoraMinuto.init_com_str("20:30")
-        ),
-        pausas = [
-            IntervaloTempo.init_com_HoraMinuto (
-                HoraMinuto.init_com_str("11:55"),
-                HoraMinuto.init_com_str("12:55")
-            )
-        ]
-    )
+    def _obter_horario_previsto_para_data(self, data: date) -> Horario:
+        if data in self.horarios_especificos:
+            return self.horarios_especificos[data]
+        
+        dia_semana_enum = Dias_Semana.data_para_enum(data)
+        horario = self.horario_semanal_base.horarios.get(dia_semana_enum)
+        
+        if horario is None:
+            return None
+        
+        return horario
 
-    horario_3 = Horario (
-        intervalo = IntervaloTempo.init_com_HoraMinuto (
-            inicio_hm = HoraMinuto.init_com_str("07:30"),
-            fim_hm = HoraMinuto.init_com_str("17:30")
-        ),
-        pausas = [
-            IntervaloTempo.init_com_HoraMinuto (
-                HoraMinuto.init_com_str("13:55"),
-                HoraMinuto.init_com_str("14:55")
-            )
-        ]
-    )
+    def registrar_ponto(self, data: date, inicio_real_str: str, fim_real_str: str, pausas_reais: list = None):
+        horario_previsto = self._obter_horario_previsto_para_data(data)
+        if not horario_previsto:
+            return
+
+        inicio_hm = HoraMinuto.init_com_str(inicio_real_str)
+        fim_hm = HoraMinuto.init_com_str(fim_real_str)
+        
+        intervalo_real = IntervaloTempo.init_com_HoraMinuto(inicio_hm, fim_hm)
+        
+        horario_real = Horario(intervalo_real, pausas_reais)
+        
+        self.registros_diarios[data] = {
+            "previsto": horario_previsto,
+            "real": horario_real
+        }
+
+    def calcular_diferencas(self, data: date) -> dict:
+        if data not in self.registros_diarios:
+            return None
+
+        registro = self.registros_diarios[data]
+        horario_previsto = registro["previsto"]
+        horario_real = registro["real"]
+
+        if horario_previsto is None:
+            return None
+
+        atraso = horario_real.inicio - horario_previsto.inicio
+        if atraso < timedelta(0):
+            atraso = timedelta(0)
+
+        tempo_trabalhado_real = horario_real.tempo_trabalhado()
+        tempo_trabalhado_previsto = horario_previsto.tempo_trabalhado()
+        tempo_extra = tempo_trabalhado_real - tempo_trabalhado_previsto
+
+        return {
+            "data": data.strftime('%d/%m/%Y'),
+            "atraso": atraso,
+            "tempo_extra": tempo_extra,
+            "tempo_trabalhado_previsto": tempo_trabalhado_previsto,
+            "tempo_trabalhado_real": tempo_trabalhado_real
+        }
     
-    horario_4 = Horario (
-        intervalo = IntervaloTempo.init_com_HoraMinuto (
-            inicio_hm = HoraMinuto.init_com_str("10:10"),
-            fim_hm = HoraMinuto.init_com_str("22:10")
-        ),
-        pausas = [
-            IntervaloTempo.init_com_HoraMinuto (
-                HoraMinuto.init_com_str("13:15"),
-                HoraMinuto.init_com_str("14:15")
-            )
-        ]
-    )
+    def obter_resumo_mensal(self, mes: int = None, ano: int = None) -> dict:
+        if mes is None:
+            mes = datetime.now().month
+        if ano is None:
+            ano = datetime.now().year
+        
+        horario_mensal = self.obter_horario_mensal(mes, ano)
+        
+        totais_previstos = horario_mensal.obter_detalhes_Mensais()
+        
+        horas_reais = timedelta(0)
+        horas_diurnas_reais = timedelta(0)
+        horas_noturnas_reais = timedelta(0)
+        num_dias_com_registro = 0
+        
+        data_inicial = date(ano, mes, 1)
+        num_dias = calendar.monthrange(ano, mes)[1]
+        
+        for i in range(num_dias):
+            data_atual = data_inicial + timedelta(days=i)
+            
+            if data_atual in self.registros_diarios:
+                registro = self.registros_diarios[data_atual]
+                horario_real = registro["real"]
+                
+                horas_reais += horario_real.tempo_trabalhado()
+                horas_diurnas_reais += horario_real.calcular_tempo_diurno()
+                horas_noturnas_reais += horario_real.calcular_tempo_noturno()
+                num_dias_com_registro += 1
+        
+        return {
+            "mes": mes,
+            "ano": ano,
+            "previstos": totais_previstos,
+            "reais": {
+                "trabalhado": horas_reais,
+                "diurno": horas_diurnas_reais,
+                "noturno": horas_noturnas_reais
+            },
+            "diferenca": horas_reais - totais_previstos["trabalhado"],
+            "dias_com_registro": num_dias_com_registro
+        }
+
+def formatar_timedelta(td: timedelta) -> str:
+    if td is None:
+        return "0:00:00"
     
-    horario_5 = Horario (
-        intervalo = IntervaloTempo.init_com_HoraMinuto (
-            inicio_hm = HoraMinuto.init_com_str("09:30"),
-            fim_hm = HoraMinuto.init_com_str("19:30")
-        ),
-        pausas = [
-            IntervaloTempo.init_com_HoraMinuto (
-                HoraMinuto.init_com_str("11:30"),
-                HoraMinuto.init_com_str("12:30")
-            )
-        ]
-    )
-    
-    horario_6 = Horario (
-        intervalo = IntervaloTempo.init_com_HoraMinuto (
-            inicio_hm = HoraMinuto.init_com_str("10:00"),
-            fim_hm = HoraMinuto.init_com_str("20:00")
-        ),
-        pausas = [
-            IntervaloTempo.init_com_HoraMinuto (
-                HoraMinuto.init_com_str("12:45"),
-                HoraMinuto.init_com_str("13:45")
-            )
-        ]
-    )
+    sinal = ""
 
-    horario_semanal.adicionar_horario( Dias_Semana.Domingo,horario_0 )
-    horario_semanal.adicionar_horario( Dias_Semana.Segunda,horario_1 )
-    horario_semanal.adicionar_horario( Dias_Semana.Terca,horario_2   )
-    horario_semanal.adicionar_horario( Dias_Semana.Quarta,horario_3  )
-    horario_semanal.adicionar_horario( Dias_Semana.Quinta,horario_4  )
-    horario_semanal.adicionar_horario( Dias_Semana.Sexta,horario_5   )
-    horario_semanal.adicionar_horario( Dias_Semana.Sabado,horario_6  )
-    
-    horario_mensal = Horario_Mensal(
-        ano = datetime.now().year,
-        mes = datetime.now().month,
-        horario_semanal= horario_semanal
-    )
-    print("\nDetalhes por dia")
-    detalhes_diarios = horario_mensal.obter_detalhes_Diarios()
-    for semana in detalhes_diarios:
-        for item in semana:
-            print(item)
-        print()
-
-    print("\nDetalhes por semana")
-    detalhes_semanais = horario_mensal.obter_detalhes_Semanais()
-    for item in detalhes_semanais:
-        print(item)
-
-    print("\nDetalhes por Mês")
-    print(horario_mensal.obter_detalhes_Mensais())
-
-if __name__ == "__main__":
-    teste()
+    if td < timedelta(0):
+        sinal = "-" 
+         
+    return f"{sinal}{abs(td)}"
