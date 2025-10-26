@@ -97,14 +97,14 @@ class Cargo:
             Psiquiatria = "Psiquiatra"
 
 class StatusAtendimento(Enum):
-    SEM_SALA = "Sem Sala Definida"
-    ESPERA = "Em Espera"
-    ATENDIMENTO = "Em Atendimento"
-    ATENDIDO = "Atendido"
+    Sem_Sala = "Sem Sala Definida"
+    Espera = "Em Espera"
+    Atendimento = "Em Atendimento"
+    Atendido = "Atendido"
 
 class StatusSala(Enum):
-    DISPONIVEL = "Disponível"
-    OCUPADO = "Ocupado"
+    Disponivel = "Disponível"
+    Ocupado = "Ocupado"
 
 class Pessoa(ABC):
     def __init__(self, nome:str, idade:int):
@@ -138,7 +138,7 @@ class Paciente(Pessoa):
     def __init__(self, nome: str, idade: int, numero_utente: int):
         Pessoa.__init__(self, nome, idade)
         self._numero_utente = numero_utente
-        self.status = StatusAtendimento.SEM_SALA
+        self.status = StatusAtendimento.Sem_Sala
         self.area_atendimento = None
         self.sala_atendimento = None
         self.senha = None
@@ -161,7 +161,7 @@ class Paciente(Pessoa):
                 relatorio += f"({atendimento['data']} às {atendimento['hora']})"
                 break
 
-        relatorio += "Funcionarios que atenderam o paciente:\n"
+        relatorio += " funcionarios atenderam o paciente:\n"
 
         for funcionario in Paciente_historicos.obter_funcionarios_paciente(self.numero_utente):
             relatorio += f"\n - {funcionario}"
@@ -222,7 +222,7 @@ class Funcionario(Pessoa):
         relatorio = f"\nFuncionário: {self.nome}"
         relatorio += f"\nNº Funcionário: {self.numero_funcionario}"
         relatorio += f"\nIdade: {self.idade} anos"
-        relatorio += f"\nCargo: {self._cargo.name if hasattr(self._cargo, 'name') else self._cargo.value}"
+        relatorio += f"\nCargo: {self._cargo.value}"
         relatorio += f"\nSalário Base: {self._salario_base:.2f}€"
         relatorio += f"\nSalário Total: {pagamento['total_a_pagar']:.2f}€"
         relatorio += f"\nAtendimentos Realizados: {len(atendimentos)}"
@@ -547,7 +547,7 @@ class SalaAtendimento(Sala):
         self.funcionarios: List[Funcionario] = []
         self.paciente_atual = None
         self.funcionario_atual = None
-        self.status = StatusSala.DISPONIVEL
+        self.status = StatusSala.Disponivel
         self.atendimentos_realizados = []
     
     def detalhar_sala(self):
@@ -567,18 +567,66 @@ class SalaAtendimento(Sala):
         detalhes += f"\nAtendimentos realizados: {len(self.atendimentos_realizados)}"
         return detalhes
 
+
     def adicionar_funcionario(self, funcionario: Funcionario):
+        # Impede administrativos
+        from Program import Administrativo
+        if isinstance(funcionario, Administrativo):
+            print("Não é permitido atribuir funcionários administrativos a salas de atendimento.")
+            return False
         if funcionario not in self.funcionarios:
             self.funcionarios.append(funcionario)
+            print(f"Funcionário {funcionario.nome} atribuído à sala {self.nome}.")
+            return True
+        
+        print(f"Funcionário {funcionario.nome} já está atribuído à sala {self.nome}.")
+        return False
+
+    def remover_funcionario(self, funcionario: Funcionario):
+        if funcionario in self.funcionarios:
+            self.funcionarios.remove(funcionario)
+            print(f"Funcionário {funcionario.nome} removido da sala {self.nome}.")
+            if self.funcionario_atual == funcionario:
+                self.funcionario_atual = None
+            return True
+        
+        print(f"Funcionário {funcionario.nome} não está atribuído à sala {self.nome}.")
+        return False
+
+    def definir_funcionario_atual(self, funcionario: Funcionario):
+        # Só permite não administrativos
+        if isinstance(funcionario, Administrativo):
+            print("Não é permitido definir um funcionário administrativo como responsável pela sala.")
+            return False
+        
+        if funcionario not in self.funcionarios:
+            print("Funcionário não está atribuído à sala. Adicione primeiro.")
+            return False
+        
+        self.funcionario_atual = funcionario
+        print(f"Funcionário {funcionario.nome} definido como responsável atual da sala {self.nome}.")
+        return True
+
+    def funcionario_responsavel(self):
+        return self.funcionario_atual
 
     def chamar_paciente(self, paciente: Paciente, funcionario: Funcionario) -> bool:
-        if self.status == StatusSala.DISPONIVEL:
+        from Program import Administrativo
+        if isinstance(funcionario, Administrativo):
+            print("Funcionário administrativo não pode atender pacientes em sala de atendimento.")
+            return False
+        if self.status == StatusSala.Disponivel:
+            if funcionario not in self.funcionarios:
+                print("Funcionário não está atribuído à sala. Adicione primeiro.")
+                return False
             self.paciente_atual = paciente
             self.funcionario_atual = funcionario
-            self.status = StatusSala.OCUPADO
-            paciente.status = StatusAtendimento.ATENDIMENTO
+            self.status = StatusSala.Ocupado
+            paciente.status = StatusAtendimento.Atendimento
             paciente.sala_atendimento = self.nome
             print(f"Paciente {paciente.nome} ({paciente.senha}) chamado para {self.nome}")
+            return True
+        print("Sala ocupada. Não é possível chamar paciente.")
         return False
 
     def finalizar_atendimento(self, descricao: str = "Atendimento realizado"):
@@ -598,10 +646,10 @@ class SalaAtendimento(Sala):
             })
             
             paciente_finalizado = self.paciente_atual
-            self.paciente_atual.status = StatusAtendimento.ATENDIDO
+            self.paciente_atual.status = StatusAtendimento.Atendido
             self.paciente_atual.sala_atendimento = None
             self.paciente_atual = None
-            self.status = StatusSala.DISPONIVEL
+            self.status = StatusSala.Disponivel
             print(f"Paciente {paciente_finalizado.nome} teve seu atendimento finalizado")
             return True
         return False
@@ -632,7 +680,7 @@ class SalaEspera(Sala):
         self.contador_senhas += 1
         senha = f"{self.prefixo_senha}{self.contador_senhas:03d}"
         paciente.atribuir_senha(senha, self.nome)
-        paciente.status = StatusAtendimento.ESPERA
+        paciente.status = StatusAtendimento.Espera
         self.fila_espera.append(paciente)
         print(f"Paciente {paciente.nome} pegou senha: {senha} (Área: {self.nome})")
 
@@ -642,7 +690,7 @@ class SalaEspera(Sala):
             return False
 
         for sala in self.salas_atendimento:
-            if sala.status == StatusSala.DISPONIVEL:
+            if sala.status == StatusSala.Disponivel:
                 paciente_a_chamar = self.fila_espera.pop(0) # Remove o paciente da fila e guarda-o em uma variável
                 
                 if funcionario not in sala.funcionarios:
@@ -667,24 +715,38 @@ class SalaEspera(Sala):
             if sala.funcionario_atual:
                 funcionario_atual = sala.funcionario_atual.nome 
 
-            status = sala.status.value
-            if senha_atual == "" or senha_atual == None:
+            if senha_atual == "" and senha_atual == None:
                 senha_atual = "N/A"
-            if(funcionario_atual == "" or funcionario_atual == None):
-                funcionario_atual = "N/A"
 
-            print(f"{sala.nome} / Status: {status} / Atendendo: {senha_atual} ({funcionario_atual})")
+            str_senha_atual = f" / Atendendo: {senha_atual}"
+            str_funcionario_atual = ""
 
-        print(f"\nFila de espera ({len(self.fila_espera)} pacientes):")
-        if self.fila_espera:
+            if funcionario_atual != "" and funcionario_atual != None:
+                str_funcionario_atual = f"({funcionario_atual})"
+
+            print(f"{sala.nome} / Status: {sala.status.value}{str_senha_atual} {str_funcionario_atual}")
+
+        if not self.fila_espera:
+            print(f"\nFila de espera Vazia:")
+        else:
+            print(f"\nFila de espera ({len(self.fila_espera)} pacientes):")
+
             i = 1
             for paciente in self.fila_espera[:5]: # Mostra apenas os primeiros 5 pacientes na fila
                 print(f"{i} - {paciente.senha} - {paciente.nome}")
                 i += 1
-        else:
-            print("(Vazia)")
 
 class SalaCirurgia(Sala):
+    def operar(self, chefe_operacao: 'Funcionario', paciente: 'Paciente', descricao: str = "Cirurgia realizada"):
+        # Só permite chefe sendo EnfermeiroChefe ou Medico
+        from Program import EnfermeiroChefe, Medico
+        if not isinstance(chefe_operacao, (EnfermeiroChefe, Medico)):
+            print("Apenas um médico ou enfermeiro chefe pode ser chefe da operação.")
+            return False
+        # Registra o atendimento ao chefe
+        chefe_operacao.registrar_atendimento(paciente, descricao)
+        print(f"Cirurgia realizada em {paciente.nome} pelo chefe {chefe_operacao.nome} na sala {self.nome}.")
+        return True
     def __init__(self, id_sala: int, nome: str, capacidade: int = 10):
         Sala.__init__(self, id_sala, nome, capacidade)
         self.equipamentos: List[str] = []

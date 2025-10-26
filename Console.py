@@ -1,6 +1,3 @@
-"""
-Já testei os funcionarios, falta testar o resto das opções do menu
-"""
 from datetime import datetime, timedelta, date
 import os
 from Program import (
@@ -15,7 +12,13 @@ from Horario import (
 
 def aguardar_e_limpar():
     input("\nPressione Enter para continuar...")
+    limpar_console()
+
+def limpar_console():
     os.system('cls')
+
+def linhas_vazias():
+    print("\n" * 100)
 
 def criar_horario_padrao(inicio: str = "09:00", fim: str = "18:00", pausa_inicio: str = "12:00", pausa_fim: str = "13:00") -> Horario_Semanal:
     horario_semanal = Horario_Semanal()
@@ -385,8 +388,101 @@ class InterfaceHospital:
             "1": ("Listar salas", self.listar_areas),
             "2": ("Criar nova área (com salas)", self.criar_area_customizada),
             "3": ("Ver status das salas", self.listar_status_salas),
+            "4": ("Gerenciar funcionário da sala", self.gerenciar_funcionario_sala),
         }
         self.exibir_menu_generico("Salas", opcoes)
+
+    def gerenciar_funcionario_sala(self):
+        sala = self.obter_Sala_por_Area(self.obter_Id_Area())
+
+        if sala is None:
+            print("Sala não encontrada!")
+            return
+
+        opcoes = {
+            "1": ("Adicionar funcionário à sala", lambda: self.adicionar_Funcionario_Sala(sala)),
+            "2": ("Remover funcionário da sala", lambda: self.remover_Funcionario_Sala(sala)),
+            "3": ("Definir responsável da sala", lambda: self.definir_Funcionario_Sala(sala)),
+            "4": ("Listar funcionários da sala", lambda: self.listar_Funcionarios_Sala(sala)),
+        }
+
+        self.exibir_menu_generico(f"Gerenciar Funcionário da Sala: {sala.nome}", opcoes, sair_texto="Voltar")
+    
+    def obter_Id_Area(self) -> int: 
+        if not self.sistema.salas_espera:
+            print("Nenhuma área criada!")
+            return
+        
+        print("Áreas disponíveis:")
+        areas = list(self.sistema.salas_espera.keys())
+
+        i = 1
+        for nome in areas:
+            print(f"{i} - {nome}")
+            i += 1
+
+        try:
+            id_Area = int(input("Escolha a área: ")) - 1
+            if id_Area < 0 or id_Area >= len(areas):
+                print("Opção inválida!")
+                return
+            
+        except ValueError:
+            print("Valor inválido!")
+            return
+        
+        return id_Area
+
+    def obter_Sala_por_Area(self, id_area: int) -> SalaEspera:
+        if id_area is None:
+            return
+        
+        areas = list(self.sistema.salas_espera.keys())
+        sala_espera = self.sistema.salas_espera[areas[id_area]]
+
+        if not sala_espera.salas_atendimento:
+            print("Nenhuma sala de atendimento nesta área!")
+            return
+
+        print("Salas de atendimento:")
+        i = 1
+        for sala in sala_espera.salas_atendimento:
+            print(f"{i} - {sala.nome}")
+            i += 1
+
+        try:
+            id_sala = int(input("Escolha a sala: ")) - 1
+            if id_sala < 0 or id_sala >= len(sala_espera.salas_atendimento):
+                print("Opção inválida!")
+                return
+            
+        except ValueError:
+            print("Valor inválido!")
+            return
+
+        return sala_espera.salas_atendimento[id_sala]
+
+    def adicionar_Funcionario_Sala(self, sala):
+        funcionario = self.selecionar_funcionario()
+        if funcionario:
+            sala.adicionar_funcionario(funcionario)
+
+    def remover_Funcionario_Sala(self, sala):
+        funcionario = self.selecionar_funcionario()
+        if funcionario:
+            sala.remover_funcionario(funcionario)
+
+    def definir_Funcionario_Sala(self, sala):
+        funcionario = self.selecionar_funcionario()
+        if funcionario:
+            sala.definir_funcionario_atual(funcionario)
+
+    def listar_Funcionarios_Sala(self, sala):
+        print("Funcionários na sala:")
+        for funcionario in sala.funcionarios:
+            print(f"- {funcionario.nome} ({funcionario.cargo.value})")
+        if sala.funcionario_atual:
+            print(f"Responsável atual: {sala.funcionario_atual.nome}")
 
     def menu_salas_cirurgia(self):
         opcoes = {
@@ -612,7 +708,7 @@ class InterfaceHospital:
 
             i_sala = 1
             for sala in sala_espera.salas_atendimento:
-                if sala.status == StatusSala.DISPONIVEL: 
+                if sala.status == StatusSala.Disponivel: 
                     status = "Disponível"
                 else:
                     status = "Ocupada"
@@ -838,12 +934,12 @@ class InterfaceHospital:
             sala_info = ""
 
             if paciente.area_atendimento:
-                area_info = f" Área: {paciente.area_atendimento}"
+                area_info = f" / Área: {paciente.area_atendimento}"
 
             if  paciente.sala_atendimento:
-                sala_info = f" Sala: {paciente.sala_atendimento}"
+                sala_info = f" / Sala: {paciente.sala_atendimento}"
 
-            print(f"{numero_utente}  {paciente.nome}  Idade: {paciente.idade}  Status: {paciente.status.value}{area_info}{sala_info}")
+            print(f"{numero_utente} / {paciente.nome} / Idade: {paciente.idade} / Status: {paciente.status.value}{area_info} {sala_info}")
 
     def enviar_paciente_para_atendimento(self):
         if not self.sistema.pacientes:
@@ -858,9 +954,18 @@ class InterfaceHospital:
         if not sala_espera:
             return
 
+
+        def filtro_paciente(paciente):
+            # Não mostrar se está em atendimento ou já tem senha
+            if paciente.status == StatusAtendimento.Atendimento:
+                return False
+            if paciente.senha is not None:
+                return False
+            return True
+
         paciente = self.selecionar_paciente(
-            "Pacientes disponiveis (sem salas):",
-            filtro=lambda paciente: paciente.status == StatusAtendimento.SEM_SALA
+            "Pacientes disponíveis (sem atendimento e sem senha):",
+            filtro=filtro_paciente
         )
 
         if not paciente:
@@ -923,47 +1028,39 @@ class InterfaceHospital:
     def gerenciar_area(self, area_nome: str):
         sala_espera = self.sistema.salas_espera[area_nome]
 
-        def mostrar_painel_e_opcoes():
-            sala_espera.mostrar_painel()
-            return True
-        
-        mostrar_painel_e_opcoes()
-        
         opcoes = {
-            "1": ("Chamar próximo paciente", lambda: self.chamar_proximo_paciente(sala_espera)),
-            "2": ("Finalizar atendimento", lambda: self.finalizar_atendimento(sala_espera)),
+            "1": ("Painel de informações da área", lambda: sala_espera.mostrar_painel()),
+            "2": ("Chamar próximo paciente", lambda: self.chamar_proximo_paciente(sala_espera)),
+            "3": ("Finalizar atendimento", lambda: self.finalizar_atendimento(sala_espera)),
         }
-        self.exibir_menu_generico("Opcoes", opcoes)
+        self.exibir_menu_generico(f"Opções da área {area_nome}", opcoes)
 
     def chamar_proximo_paciente(self, sala_espera: SalaEspera):
-        if not self.sistema.funcionarios:
+        # Filtra apenas funcionários que NÃO são administrativos
+        funcionarios_validos = []
+
+        for funcionario in self.sistema.funcionarios.values():
+            if not isinstance(funcionario.cargo, Cargo.Administrativo):
+                if funcionario in sala_espera.funcionarios:
+                    funcionarios_validos.append(funcionario)
+
+        if not funcionarios_validos:
             print("Nenhum funcionário disponível!")
             return
 
         print("\nFuncionarios disponíveis:")
         i = 1
-        for funcionario in self.sistema.funcionarios.values():
+        for funcionario in funcionarios_validos:
             print(f"{i} {funcionario.nome} - {funcionario.cargo.name}")
             i += 1
 
         try:
             escolha = int(input("Escolha um funcionário: "))
-
-            contador = 1
-            funcionario_selecionado = None
-            for funcionario in self.sistema.funcionarios.values():
-                if contador == escolha:
-                    funcionario_selecionado = funcionario
-                    break
-
-                contador += 1
-
-            if not funcionario_selecionado:
+            if not (1 <= escolha <= len(funcionarios_validos)):
                 print("Opção inválida!")
                 return
-
+            funcionario_selecionado = funcionarios_validos[escolha - 1]
             sala_espera.chamar_proximo(funcionario_selecionado)
-
         except ValueError:
             print("Valor inválido!")
 
@@ -971,7 +1068,7 @@ class InterfaceHospital:
         sala_com_atendimento = None
         
         for sala in sala_espera.salas_atendimento:
-            if sala.status == StatusSala.OCUPADO and sala.paciente_atual:
+            if sala.status == StatusSala.Ocupado and sala.paciente_atual:
                 sala_com_atendimento = sala
                 break
 
@@ -1028,13 +1125,13 @@ class InterfaceHospital:
             atendidos = 0
             sem_sala = 0
             for paciente in self.sistema.pacientes.values():
-                if paciente.status == StatusAtendimento.ESPERA:
+                if paciente.status == StatusAtendimento.Espera:
                     em_espera += 1
-                elif paciente.status == StatusAtendimento.ATENDIMENTO:
+                elif paciente.status == StatusAtendimento.Atendimento:
                     em_atendimento += 1
-                elif paciente.status == StatusAtendimento.ATENDIDO:
+                elif paciente.status == StatusAtendimento.Atendido:
                     atendidos += 1
-                elif paciente.status == StatusAtendimento.SEM_SALA:
+                elif paciente.status == StatusAtendimento.Sem_Sala:
                     sem_sala += 1
 
             print(f"\nStatus dos Pacientes:")
@@ -1550,6 +1647,11 @@ class InterfaceHospital:
             print(f"Valor inválido!")
 
 if __name__ == "__main__":
-    print("\nBem-vindo ao Sistema Hospitalar!")    
-    interface = InterfaceHospital()
-    interface.inicializar_dados_padrao()
+    try:
+        print("\nBem-vindo ao Sistema Hospitalar!")
+        interface = InterfaceHospital()
+        interface.inicializar_dados_padrao()
+    except KeyboardInterrupt:
+        limpar_console()
+        linhas_vazias()
+        print("\nPrograma encerrado.")
