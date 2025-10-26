@@ -244,7 +244,7 @@ class Horario_Mensal:
         self.mes = mes
         self.horario_semanal = horario_semanal      
 
-    def calcular_totais_mensais(self) -> dict:
+    def obter_detalhes_Mensais(self) -> dict:
         total_trabalhado = timedelta()
         total_diurno = timedelta()
         total_noturno = timedelta()
@@ -268,7 +268,7 @@ class Horario_Mensal:
             "noturno": total_noturno
         }
     
-    def obter_dados_diarios(self) -> list:
+    def obter_detalhes_Diarios_Brutos(self) -> list:
         detalhes_lista = []
         num_dias = calendar.monthrange(self.ano, self.mes)[1]
         data_inicial = date(self.ano, self.mes, 1)
@@ -292,12 +292,12 @@ class Horario_Mensal:
         
         return detalhes_lista
     
-    def gerar_relatorio_diario(self) -> list:
+    def obter_detalhes_Diarios(self) -> list:
         detalhes_dict = {}
         calendar.setfirstweekday(calendar.SUNDAY)
         semanas_do_mes = calendar.monthcalendar(self.ano, self.mes)
-        i = 0
-        for semana in semanas_do_mes:
+        
+        for i, semana in enumerate(semanas_do_mes):
             num_semana = i + 1
             if num_semana not in detalhes_dict:
                 detalhes_dict[num_semana] = []
@@ -318,8 +318,7 @@ class Horario_Mensal:
                         "diurno": horario_do_dia.calcular_tempo_diurno(),
                         "noturno": horario_do_dia.calcular_tempo_noturno()
                     })
-            i += 1
-
+        
         saida_formatada = []
         for num_semana in sorted(detalhes_dict.keys()):
             dias_da_semana = detalhes_dict[num_semana]
@@ -339,12 +338,12 @@ class Horario_Mensal:
             
         return saida_formatada
     
-    def gerar_relatorio_semanal(self) -> list:
+    def obter_detalhes_Semanais(self) -> list:
         saida_formatada = []
-        calendar.setfirstweekday(calendar.SUNDAY) # Defini Domingo como primeiro dia da semana
-        semanas_do_mes = calendar.monthcalendar(self.ano, self.mes) # Obtem as semanas do mês
-        i = 0
-        for semana in semanas_do_mes:
+        calendar.setfirstweekday(calendar.SUNDAY)
+        semanas_do_mes = calendar.monthcalendar(self.ano, self.mes)
+
+        for i, semana in enumerate(semanas_do_mes):
             total_trabalhado_sem = timedelta()
             total_diurno_sem = timedelta()
             total_noturno_sem = timedelta()
@@ -375,9 +374,7 @@ class Horario_Mensal:
                     f"Noturno:  {total_noturno_sem}"
                 )
                 saida_formatada.append(semana_str)
-
-            i += 1
-
+                
         return saida_formatada
 
 class FuncionarioHorario:
@@ -434,8 +431,9 @@ class FuncionarioHorario:
 
     def registrar_ponto(self, data: date, inicio_real_str: str, fim_real_str: str, pausas_reais: list = None):
         horario_previsto = self._obter_horario_previsto_para_data(data)
-        
-        # Cria o horário real independentemente de haver horário previsto
+        if not horario_previsto:
+            return
+
         inicio_hm = HoraMinuto.init_com_str(inicio_real_str)
         fim_hm = HoraMinuto.init_com_str(fim_real_str)
         
@@ -443,9 +441,8 @@ class FuncionarioHorario:
         
         horario_real = Horario(intervalo_real, pausas_reais)
         
-        # Registra mesmo se não houver horário previsto (folga)
         self.registros_diarios[data] = {
-            "previsto": horario_previsto,  # Pode ser None em caso de folga
+            "previsto": horario_previsto,
             "real": horario_real
         }
 
@@ -484,7 +481,7 @@ class FuncionarioHorario:
         
         horario_mensal = self.obter_horario_mensal(mes, ano)
         
-        totais_previstos = horario_mensal.calcular_totais_mensais()
+        totais_previstos = horario_mensal.obter_detalhes_Mensais()
         
         horas_reais = timedelta(0)
         horas_diurnas_reais = timedelta(0)

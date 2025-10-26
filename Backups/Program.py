@@ -193,7 +193,7 @@ class Paciente(Pessoa):
 
         if len(self.__historico_medico_Ids) > 0:
             for id_historico in self.__historico_medico_Ids:
-                resultado += " " + self.obter_historico_medico_id(id_historico) + "\n"
+                resultado += "\t" + self.obter_historico_medico_id(id_historico) + "\n"
 
         return resultado
 
@@ -668,11 +668,6 @@ class SalaEspera(Sala):
                 funcionario_atual = sala.funcionario_atual.nome 
 
             status = sala.status.value
-            if senha_atual == "" or senha_atual == None:
-                senha_atual = "N/A"
-            if(funcionario_atual == "" or funcionario_atual == None):
-                funcionario_atual = "N/A"
-
             print(f"{sala.nome} / Status: {status} / Atendendo: {senha_atual} ({funcionario_atual})")
 
         print(f"\nFila de espera ({len(self.fila_espera)} pacientes):")
@@ -691,10 +686,10 @@ class SalaCirurgia(Sala):
     
     def adicionar_equipamento(self, equipamento: str):
         if equipamento in self.equipamentos:
-            print(f"Equipamento {equipamento} já existe na {self.nome}")
+            print(f"Equipamento '{equipamento}' já existe na {self.nome}")
         else:
             self.equipamentos.append(equipamento)
-            print(f"Equipamento {equipamento} adicionado à {self.nome}")
+            print(f"Equipamento '{equipamento}' adicionado à {self.nome}")
     
     def detalhar_sala(self):
         detalhes = f"\nSala de Cirurgia"
@@ -769,18 +764,6 @@ class SistemaHospital:
         sala = SalaCirurgia(id_sala, nome, capacidade)
         self.salas_cirurgia[nome] = sala
         return sala
-    
-    def gerar_relatorio_funcionario(self, numero_funcionario: int) -> str:
-        funcionario = self.obter_funcionario(numero_funcionario)
-        if not funcionario:
-            return "Funcionário não encontrado"
-        return str(funcionario)
-    
-    def gerar_relatorio_paciente(self, numero_utente: str) -> str:
-        if numero_utente not in self.pacientes:
-            return "Paciente não encontrado"
-        paciente = self.pacientes[numero_utente]
-        return str(paciente)
 
 class Paciente_historicos:    
     Pacientes = {}

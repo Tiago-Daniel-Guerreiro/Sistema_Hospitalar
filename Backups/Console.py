@@ -1,6 +1,3 @@
-"""
-Já testei os funcionarios, falta testar o resto das opções do menu
-"""
 from datetime import datetime, timedelta, date
 import os
 from Program import (
@@ -68,7 +65,8 @@ def criar_horario_interativo() -> Horario_Semanal:
                 )
             )
             
-            adicionar_pausas = input(f"\nDeseja adicionar pausas para {dia.name}? (s/n): ").strip().lower()
+            print(f"\nDeseja adicionar pausas para {dia.name}? (s/n): ")
+            adicionar_pausas = input().strip().lower()
             
             if adicionar_pausas == 's':
                 contador_pausas = 0
@@ -90,7 +88,7 @@ def criar_horario_interativo() -> Horario_Semanal:
                         HoraMinuto.init_com_str(pausa_fim_str)
                     )
                     
-                    if horario._pausas.adicionar_pausa(pausa):
+                    if horario.pausas.adicionar_pausa(pausa):
                         print(f"Pausa {pausa_inicio_str} - {pausa_fim_str} adicionada!")
                         contador_pausas += 1
                     else:
@@ -103,8 +101,9 @@ def criar_horario_interativo() -> Horario_Semanal:
             print(f"\n{dia.name} configurado: {inicio_str} - {fim_str}")
             print(f"Tempo de trabalho: {formatar_timedelta(tempo_trabalhado)}")
             
-        except Exception as ex:
-            print(f"Erro ao configurar - {ex} - {dia.name} marcado como folga.")
+        except Exception:
+            print(f"Erro ao configurar {dia.name}. -")
+            print(f"{dia.name} marcado como folga.")
 
     print("\nResumo do horário semanal:")
 
@@ -195,7 +194,7 @@ class InterfaceHospital:
     def obter_mes_ano(self):
         mes_input = input("Mês (1-12, vazio=atual): ").strip()
         ano_input = input("Ano (vazio=atual): ").strip()
-
+        
         mes = datetime.now().month
         ano = datetime.now().year
         
@@ -206,6 +205,37 @@ class InterfaceHospital:
             ano = int(ano_input)
 
         return mes, ano
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def selecionar_area(self, mensagem: str = "Áreas de atendimento:"):
         if not self.sistema.salas_espera:
@@ -838,12 +868,12 @@ class InterfaceHospital:
             sala_info = ""
 
             if paciente.area_atendimento:
-                area_info = f" Área: {paciente.area_atendimento}"
+                area_info = f"\tÁrea: {paciente.area_atendimento}"
 
             if  paciente.sala_atendimento:
-                sala_info = f" Sala: {paciente.sala_atendimento}"
+                sala_info = f"\tSala: {paciente.sala_atendimento}"
 
-            print(f"{numero_utente}  {paciente.nome}  Idade: {paciente.idade}  Status: {paciente.status.value}{area_info}{sala_info}")
+            print(f"{numero_utente:09d} \t{paciente.nome} \tIdade: {paciente.idade} \tStatus: {paciente.status.value}{area_info}{sala_info}")
 
     def enviar_paciente_para_atendimento(self):
         if not self.sistema.pacientes:
@@ -868,6 +898,32 @@ class InterfaceHospital:
 
         try:
             sala_espera.pegar_senha(paciente)
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             area_nome_encontrado = "Desconhecida"
             for nome_area in self.sistema.salas_espera.keys():
                 sala = self.sistema.salas_espera[nome_area]
@@ -1260,7 +1316,7 @@ class InterfaceHospital:
             mes, ano = self.obter_mes_ano()
             
             horario_mensal = funcionario.horario_funcionario.obter_horario_mensal(mes, ano)
-            detalhes_diarios = horario_mensal.obter_dados_diarios()
+            detalhes_diarios = horario_mensal.obter_detalhes_Diarios_Brutos()
             
             print(f"\nHorário Mensal de {funcionario.nome} - {mes:02d}/{ano}")
             print(f"Data / Dia / Entrada / Saída / Pausas / Trabalhado / Diurno / Noturno")
@@ -1293,8 +1349,8 @@ class InterfaceHospital:
 
                     print(f"{data_str} / {dia_semana} / {str(entrada)} / {str(saida)} / {pausas_str} / {trabalhado_str} / {diurno_str} / {noturno_str}")
 
-            detalhes_mensais = horario_mensal.calcular_totais_mensais()
-            print(f"Totais:\n Diurno: {formatar_timedelta(detalhes_mensais['diurno'])}\n Noturno: {formatar_timedelta(detalhes_mensais['noturno'])}\n Tempo trabalhado total: {formatar_timedelta(detalhes_mensais['trabalhado'])}")
+            detalhes_mensais = horario_mensal.obter_detalhes_Mensais()
+            print(f"Totais {formatar_timedelta(detalhes_mensais['trabalhado'])} {formatar_timedelta(detalhes_mensais['diurno'])} {formatar_timedelta(detalhes_mensais['noturno'])}\n")
 
         except (ValueError, IndexError):
             print("Valor inválido!")
@@ -1306,12 +1362,12 @@ class InterfaceHospital:
 
         try:
             print("\nDias da semana:")
-            i = 1
+            i = 0
             for dia in Dias_Semana:
                 print(f"{i} - {dia.name}")
                 i += 1
-
-            dia_escolha = int(input("\nEscolha o dia da semana: ")) - 1
+            
+            dia_escolha = int(input("\nEscolha o dia da semana: "))
             if not (0 <= dia_escolha <= 6):
                 print("Opção inválida!")
                 return
@@ -1365,7 +1421,7 @@ class InterfaceHospital:
                         HoraMinuto.init_com_str(pausa_fim_str)
                     )
                     
-                    if horario._pausas.adicionar_pausa(pausa):
+                    if horario.pausas.adicionar_pausa(pausa):
                         print("Pausa adicionada com sucesso!")
                     else:
                         print("Erro ao adicionar pausa (fora do horário de trabalho ou limite excedido)")
@@ -1386,17 +1442,15 @@ class InterfaceHospital:
         try:
             print("\nDefina a data para o horário específico:")
             dia = int(input("Dia: "))
-            mes_ano = self.obter_mes_ano()
-
-            data_especifica = date(mes_ano[1], mes_ano[0], dia)
-
-            print(f"\nConfigurar horário para {data_especifica.strftime('%d/%m/%Y')}:")
+            mes = int(input("Mês: "))
+            ano = int(input("Ano: "))
             
-            inicio_str = input("Hora de início (HH:MM) (Deixe em branco para marcar como folga): ").strip()
-            if not inicio_str:
-                funcionario.definir_horario_especifico(data_especifica, Horario(intervalo=IntervaloTempo(timedelta(0),timedelta(0))))
-                print(f"{data_especifica.strftime('%d/%m/%Y')} marcado como folga!")
-                return
+            data_especifica = date(ano, mes, dia)
+            
+            print(f"\nConfigurar horário para {data_especifica.strftime('%d/%m/%Y')}:")
+            print("(Deixe em branco para marcar como folga)")
+            
+            inicio_str = input("Hora de início (HH:MM): ").strip()
             fim_str = input("Hora de fim (HH:MM): ").strip()
             
             horario = Horario(
@@ -1419,7 +1473,7 @@ class InterfaceHospital:
                         HoraMinuto.init_com_str(pausa_fim_str)
                     )
                     
-                    if horario._pausas.adicionar_pausa(pausa):
+                    if horario.pausas.adicionar_pausa(pausa):
                         print("Pausa adicionada com sucesso!")
                     else:
                         print("Erro ao adicionar pausa")
@@ -1437,13 +1491,15 @@ class InterfaceHospital:
 
         try:
             print(f"\nRegistar ponto para {funcionario.nome}")
-            print("Data:")
-            dia_input = input("Dia (deixe em branco para hoje): ").strip()
-            data_ponto = date.today()
-
+            print("Data (deixe em branco para hoje):")
+            dia_input = input("Dia: ").strip()
+            
             if dia_input:
-                mes_ano = self.obter_mes_ano()
-                data_ponto = date(mes_ano[1], mes_ano[0], int(dia_input))
+                mes = int(input("Mês: "))
+                ano = int(input("Ano: "))
+                data_ponto = date(int(dia_input), mes, ano)
+            else:
+                data_ponto = date.today()
             
             print(f"\nData: {data_ponto.strftime('%d/%m/%Y')}")
             
@@ -1453,20 +1509,16 @@ class InterfaceHospital:
             inicio_previsto_str = ""
             fim_previsto_str = ""
             
-            # Verifica se há algum horário específico para esta data
+            # Verifica se há horário específico para esta data
             if data_ponto in funcionario.horario_funcionario.horarios_especificos:
                 horario_previsto = funcionario.horario_funcionario.horarios_especificos[data_ponto]
             elif dia_semana in funcionario.horario_semanal.horarios:
                 horario_previsto = funcionario.horario_semanal.horarios[dia_semana]
             
-            # Verifica se é um dia de folga
-            if not horario_previsto:
-                print(f"\nNo dia {data_ponto.strftime('%d/%m/%Y')} está configurado como folga no horário deste funcionário. O ponto não pode ser registado.")
-                return
-
-            if horario_previsto and horario_previsto.inicio != timedelta(0):
-                inicio_previsto_hm = HoraMinuto.init_com_deltatime(horario_previsto.inicio)
-                fim_previsto_hm = HoraMinuto.init_com_deltatime(horario_previsto.fim)
+            if horario_previsto and horario_previsto.intervalo.inicio != timedelta(0):
+                # Converter timedelta para HoraMinuto e obter strings
+                inicio_previsto_hm = HoraMinuto.init_com_deltatime(horario_previsto.intervalo.inicio)
+                fim_previsto_hm = HoraMinuto.init_com_deltatime(horario_previsto.intervalo.fim)
 
                 inicio_previsto_str = str(inicio_previsto_hm)
                 fim_previsto_str = str(fim_previsto_hm)
