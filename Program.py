@@ -380,7 +380,6 @@ class Funcionario(Pessoa):
 class Medico(Funcionario):
     def __init__(self, nome: str, idade: int, salario: float, numero_funcionario: int, especialidade: Cargo, horario_semanal: Horario_Semanal):
         Funcionario.__init__(self, nome, idade, salario, numero_funcionario, especialidade, horario_semanal)
-        self._especialidade = especialidade
         
         # Adiciona a regra de bônus por atendimento
         self.adicionar_regra_pagamento(RegraBonusPorAtendimento(valor_por_paciente=50.0))
@@ -392,7 +391,7 @@ class Medico(Funcionario):
         relatorio = f"\nDr./Dra. {self.nome}"
         relatorio += f"\nNº Funcionário: {self.numero_funcionario}"
         relatorio += f"\nIdade: {self.idade} anos"
-        relatorio += f"\nEspecialidade: {self._especialidade.value}"
+        relatorio += f"\nEspecialidade: {self.cargo.value}"
         relatorio += f"\nSalário Base: {self._salario_base:.2f}€"
         relatorio += f"\nBônus por Atendimento: 50.00€ por paciente"
         relatorio += f"\nTotal de Atendimentos: {len(atendimentos)}"
@@ -405,10 +404,6 @@ class Medico(Funcionario):
                 relatorio += f"({atendimento['data']} às {atendimento['hora']})"
         
         return relatorio
-    
-    @property
-    def especialidade(self) -> Cargo:
-        return self._especialidade
 
 class Enfermeiro(Funcionario):
     def __init__(self, nome: str, idade: int, salario: float, numero_funcionario: int, horario_semanal: Horario_Semanal):
@@ -416,15 +411,24 @@ class Enfermeiro(Funcionario):
         Funcionario.__init__(self, nome, idade, salario, numero_funcionario, Cargo.Saude.Enfermeiro, horario_semanal)
         
         self._turno = "dia"  # Inicializa com o valor padrão
+        self.atualizar_turno() # Atualiza o turno com base no horário semanal
+
+    def atualizar_turno(self):
         # Determinar turno com base no horário semanal
-        if horario_semanal:
-            totais = horario_semanal.calcular_totais_semanais()
+        if self.horario_semanal:
+            totais = self.horario_semanal.calcular_totais_semanais()
             if totais["noturno"] > totais["diurno"]:
                 self._turno = "noite"
-        
-        # Adiciona regra de bônus noturno se aplicável
-        if self._turno == "noite":
+            else:
+                self._turno = "dia"
+
+        self.adicionar_regra_pagamento(RegraBonusFixo(300.0))
+        if self._turno != "noite":
             self.adicionar_regra_pagamento(RegraBonusFixo(300.0))
+        else:
+            for regra in self.regras_pagamento:
+                if isinstance(regra, RegraBonusFixo):
+                    self.regras_pagamento.remove(regra)
 
     def __str__(self):
         atendimentos = self.obter_atendimentos()
@@ -449,7 +453,16 @@ class Enfermeiro(Funcionario):
                 relatorio += f"({atendimento['data']} às {atendimento['hora']})"
         
         return relatorio
+    
+    @property
+    def horario_semanal(self) -> Horario_Semanal:
+        return self._horario_semanal
 
+    @horario_semanal.setter
+    def horario_semanal(self, novo_horario: Horario_Semanal):
+        self._horario_semanal = novo_horario
+        self.atualizar_turno()
+        
     @property
     def turno(self) -> str:
         return self._turno
