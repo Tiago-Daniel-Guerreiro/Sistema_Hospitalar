@@ -776,72 +776,79 @@ class SalaCirurgia(Sala):
         return detalhes
 
 class SistemaHospital:
-    def __init__(self):
-        self.pacientes: Dict[str, Paciente] = {}
-        self.funcionarios: Dict[int, Funcionario] = {}
-        self.salas_espera: Dict[str, SalaEspera] = {}
-        self.salas_cirurgia: Dict[str, SalaCirurgia] = {}
-        self.historico_atendimentos: List[Dict] = []
-        self._proximo_numero_utente = 1
+    pacientes: Dict[str, Paciente] = {}
+    funcionarios: Dict[int, Funcionario] = {}
+    salas_espera: Dict[str, SalaEspera] = {}
+    salas_cirurgia: Dict[str, SalaCirurgia] = {}
+    historico_atendimentos: List[Dict] = []
+    proximo_numero_utente = 1
 
-    def registrar_paciente(self, nome_ou_paciente, idade: int = None) -> Paciente:
+    @staticmethod
+    def registrar_paciente(nome_ou_paciente, idade: int = None) -> Paciente:
         if isinstance(nome_ou_paciente, Paciente):
             paciente = nome_ou_paciente
         elif isinstance(nome_ou_paciente, str) and idade is not None:
-            numero_utente = self._proximo_numero_utente
-            self._proximo_numero_utente += 1
+            numero_utente = SistemaHospital.proximo_numero_utente
+            SistemaHospital.proximo_numero_utente += 1
             paciente = Paciente(nome_ou_paciente, idade, numero_utente)
         else:
             return None
         
-        self.pacientes[paciente.numero_utente] = paciente
+        SistemaHospital.pacientes[paciente.numero_utente] = paciente
         return paciente
 
-    def registrar_funcionario(self, funcionario: Funcionario):
+    @staticmethod
+    def registrar_funcionario(funcionario: Funcionario):
         if not isinstance(funcionario, Funcionario): # "is" não não funciona com subclasses
             return
                 
-        self.funcionarios[funcionario.numero_funcionario] = funcionario
+        SistemaHospital.funcionarios[funcionario.numero_funcionario] = funcionario
 
-    def obter_funcionario(self, numero_funcionario: int):
-        if numero_funcionario not in self.funcionarios:
+    @staticmethod
+    def obter_funcionario(numero_funcionario: int):
+        if numero_funcionario not in SistemaHospital.funcionarios:
             return None
-        return self.funcionarios[numero_funcionario]
+        return SistemaHospital.funcionarios[numero_funcionario]
         
-    def obter_paciente(self, numero_utente: int):
+    @staticmethod
+    def obter_paciente(numero_utente: int):
         utente_str = f"{numero_utente:09d}"
-        if utente_str not in self.pacientes:
+        if utente_str not in SistemaHospital.pacientes:
             return None
 
-        return self.pacientes[utente_str]
+        return SistemaHospital.pacientes[utente_str]
     
-    def criar_area_especializada(self, nome_area: str, num_salas: int = 2, prefixo_senha: str = "A", capacidade_espera: int = 50, capacidade_atendimento: int = 1) -> SalaEspera:
-        sala_espera = SalaEspera(len(self.salas_espera), nome_area, capacidade_espera, prefixo_senha)
-        
+    @staticmethod
+    def criar_area_especializada(nome_area: str, num_salas: int = 2, prefixo_senha: str = "A", capacidade_espera: int = 50, capacidade_atendimento: int = 1) -> SalaEspera:
+        sala_espera = SalaEspera(len(SistemaHospital.salas_espera), nome_area, capacidade_espera, prefixo_senha)
+
         for i in range(num_salas): # Cada Área de atendimento tem a sua casa decimal como 100 ou 200, e cada sala é um aumento de 1
-            sala = SalaAtendimento(len(self.salas_espera) * 100 + i, f"{nome_area} - Sala {i+1}", capacidade_atendimento)
+            sala = SalaAtendimento(len(SistemaHospital.salas_espera) * 100 + i, f"{nome_area} - Sala {i+1}", capacidade_atendimento)
             sala_espera.adicionar_sala_atendimento(sala)
         
-        self.salas_espera[nome_area] = sala_espera
+        SistemaHospital.salas_espera[nome_area] = sala_espera
         return sala_espera
-
-    def criar_sala_cirurgia(self, nome: str, capacidade: int = 10) -> SalaCirurgia:
+    
+    @staticmethod
+    def criar_sala_cirurgia(nome: str, capacidade: int = 10) -> SalaCirurgia:
         capacidade = max(1, capacidade)  # Capacidade mínima = 1
-        id_sala = len(self.salas_cirurgia) + 1
+        id_sala = len(SistemaHospital.salas_cirurgia) + 1
         sala = SalaCirurgia(id_sala, nome, capacidade)
-        self.salas_cirurgia[nome] = sala
+        SistemaHospital.salas_cirurgia[nome] = sala
         return sala
     
-    def gerar_relatorio_funcionario(self, numero_funcionario: int) -> str:
-        funcionario = self.obter_funcionario(numero_funcionario)
+    @staticmethod
+    def gerar_relatorio_funcionario(numero_funcionario: int) -> str:
+        funcionario = SistemaHospital.obter_funcionario(numero_funcionario)
         if not funcionario:
             return "Funcionário não encontrado"
         return str(funcionario)
     
-    def gerar_relatorio_paciente(self, numero_utente: str) -> str:
-        if numero_utente not in self.pacientes:
+    @staticmethod
+    def gerar_relatorio_paciente(numero_utente: str) -> str:
+        if numero_utente not in SistemaHospital.pacientes:
             return "Paciente não encontrado"
-        paciente = self.pacientes[numero_utente]
+        paciente = SistemaHospital.pacientes[numero_utente]
         return str(paciente)
 
     @staticmethod
