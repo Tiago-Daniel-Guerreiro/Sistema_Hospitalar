@@ -121,7 +121,7 @@ class Pessoa(ABC):
     
     @nome.setter
     def nome(self, novo_nome:str):
-        if self._nome == None or self._nome == "":
+        if novo_nome == None or novo_nome == "":
             return
         self._nome = novo_nome
     
@@ -148,9 +148,9 @@ class Paciente(Pessoa):
         relatorio += f"\nNº Utente: {self.numero_utente}"
         relatorio += f"\nIdade: {self.idade} anos"
         relatorio += f"\nStatus: {self.status.value}\n"
-        Paciente_historicos.Pacientes[self.numero_utente] = self
+        SistemaHospital.Pacientes[self.numero_utente] = self
 
-        atendimentos_paciente = Paciente_historicos.obter_historicos_paciente(self.numero_utente)
+        atendimentos_paciente = SistemaHospital.obter_historicos_paciente(self.numero_utente)
 
         relatorio += f"\nAtendimentos: {len(atendimentos_paciente)}"
         
@@ -163,7 +163,7 @@ class Paciente(Pessoa):
 
         relatorio += " funcionarios atenderam o paciente:\n"
 
-        for funcionario in Paciente_historicos.obter_funcionarios_paciente(self.numero_utente):
+        for funcionario in SistemaHospital.obter_funcionarios_paciente(self.numero_utente):
             relatorio += f"\n - {funcionario}"
 
         relatorio += "\n"
@@ -198,7 +198,7 @@ class Paciente(Pessoa):
         return resultado
 
     def obter_historico_medico_id(self,id_historico:int) -> str:
-        if id_historico in Paciente_historicos.obter_historicos_paciente(self.numero_utente):
+        if id_historico in SistemaHospital.obter_historicos_paciente(self.numero_utente):
             return str(id_historico) + " - " + self.__historico_medico(id_historico)
         
         return "O id não corresponde a nenhum historico médico"
@@ -225,9 +225,9 @@ class Funcionario(Pessoa):
         relatorio += f"\nCargo: {self._cargo.value}"
         relatorio += f"\nSalário Base: {self._salario_base:.2f}€"
         relatorio += f"\nSalário Total: {pagamento['total_a_pagar']:.2f}€"
-        relatorio += f"\nAtendimentos Realizados: {len(atendimentos)}"
         
         if atendimentos:
+            relatorio += f"\nAtendimentos Realizados: {len(atendimentos)}"
             relatorio += "\nÚltimos atendimentos:"
             for atendimento in atendimentos[-3:]:
                 relatorio += f"\n  - {atendimento['paciente'].nome}: {atendimento['descricao']} "
@@ -530,7 +530,7 @@ class EnfermeiroChefe(Enfermeiro, Administrativo):
                 relatorio += f"({atendimento['data']} às {atendimento['hora']})"
         
         return relatorio
-    
+
 class Sala(ABC):
     def __init__(self, id_sala: int, nome: str, capacidade: int):
         self.id_sala = id_sala
@@ -844,51 +844,46 @@ class SistemaHospital:
         paciente = self.pacientes[numero_utente]
         return str(paciente)
 
-class Paciente_historicos:    
-    Pacientes = {}
-    Funcionarios = {}
-    Historico_Medico = {}
-    
     @staticmethod
     def adicionar_funcionario(funcionario):
         num_funcionario = funcionario.numero_funcionario
 
-        if num_funcionario in Paciente_historicos.Historico_Medico:
+        if num_funcionario in SistemaHospital.Historico_Medico:
             return False
 
-        Paciente_historicos.Funcionarios[num_funcionario] = funcionario
-        Paciente_historicos.Historico_Medico[num_funcionario] = {}
+        SistemaHospital.Funcionarios[num_funcionario] = funcionario
+        SistemaHospital.Historico_Medico[num_funcionario] = {}
         return True
        
     @staticmethod
     def adicionar_paciente(paciente):
         if isinstance(paciente, Paciente):
-            Paciente_historicos.Pacientes[paciente.numero_utente] = paciente
+            SistemaHospital.Pacientes[paciente.numero_utente] = paciente
             return True
         return False
     
     @staticmethod
     def adicionar_historico(numero_funcionario: int, numero_utente: str, id_historico: int, descricao: str) -> bool:
-        if numero_funcionario not in Paciente_historicos.Funcionarios:
+        if numero_funcionario not in SistemaHospital.Funcionarios:
             return False
-        if numero_utente not in Paciente_historicos.Pacientes:
-            return False
-        
-        if numero_funcionario not in Paciente_historicos.Historico_Medico:
-            Paciente_historicos.Historico_Medico[numero_funcionario] = {}
-        
-        if numero_utente not in Paciente_historicos.Historico_Medico[numero_funcionario]:
-            Paciente_historicos.Historico_Medico[numero_funcionario][numero_utente] = {}
-        
-        if id_historico in Paciente_historicos.Historico_Medico[numero_funcionario][numero_utente]:
+        if numero_utente not in SistemaHospital.Pacientes:
             return False
         
-        Paciente_historicos.Historico_Medico[numero_funcionario][numero_utente][id_historico] = descricao
+        if numero_funcionario not in SistemaHospital.Historico_Medico:
+            SistemaHospital.Historico_Medico[numero_funcionario] = {}
+        
+        if numero_utente not in SistemaHospital.Historico_Medico[numero_funcionario]:
+            SistemaHospital.Historico_Medico[numero_funcionario][numero_utente] = {}
+        
+        if id_historico in SistemaHospital.Historico_Medico[numero_funcionario][numero_utente]:
+            return False
+        
+        SistemaHospital.Historico_Medico[numero_funcionario][numero_utente][id_historico] = descricao
         return True
     
     @staticmethod
     def obter_historico(id_historico: int):
-        for numero_funcionario in Paciente_historicos.Historico_Medico.values():
+        for numero_funcionario in SistemaHospital.Historico_Medico.values():
             if id_historico in numero_funcionario:
                 return numero_funcionario[id_historico]
         return None
@@ -897,8 +892,8 @@ class Paciente_historicos:
     def obter_historicos_paciente(numero_utente: str) -> Dict[int, str]:
         historicos = {}
         
-        for numero_funcionario in Paciente_historicos.Historico_Medico:
-            pacientes_dict = Paciente_historicos.Historico_Medico[numero_funcionario]
+        for numero_funcionario in SistemaHospital.Historico_Medico:
+            pacientes_dict = SistemaHospital.Historico_Medico[numero_funcionario]
             if numero_utente in pacientes_dict:
                 historicos.update(pacientes_dict[numero_utente])
 
@@ -907,8 +902,8 @@ class Paciente_historicos:
     @staticmethod
     def obter_funcionarios_paciente(numero_utente: str) -> List[int]:
         funcionarios = []
-        for numero_funcionario in Paciente_historicos.Historico_Medico:
-            pacientes_dict = Paciente_historicos.Historico_Medico[numero_funcionario]
+        for numero_funcionario in SistemaHospital.Historico_Medico:
+            pacientes_dict = SistemaHospital.Historico_Medico[numero_funcionario]
             if numero_utente in pacientes_dict:
                 funcionarios.append(numero_funcionario)
                 
@@ -916,35 +911,35 @@ class Paciente_historicos:
     
     @staticmethod
     def obter_pacientes_funcionario(numero_funcionario: int) -> List[str]:
-        if numero_funcionario in Paciente_historicos.Historico_Medico:
-            return list(Paciente_historicos.Historico_Medico[numero_funcionario].keys())
+        if numero_funcionario in SistemaHospital.Historico_Medico:
+            return list(SistemaHospital.Historico_Medico[numero_funcionario].keys())
         return []
     
     @staticmethod
     def obter_historicos_funcionario_paciente(numero_funcionario: int, numero_utente: str) -> Dict[int, str]:
-        if numero_funcionario in Paciente_historicos.Historico_Medico:
-            if numero_utente in Paciente_historicos.Historico_Medico[numero_funcionario]:
-                return Paciente_historicos.Historico_Medico[numero_funcionario][numero_utente]
+        if numero_funcionario in SistemaHospital.Historico_Medico:
+            if numero_utente in SistemaHospital.Historico_Medico[numero_funcionario]:
+                return SistemaHospital.Historico_Medico[numero_funcionario][numero_utente]
         return {}
     
     @staticmethod
     def listar_todos_historicos() -> str:
         resultado = "Historico Médico Completo:\n"
 
-        if not Paciente_historicos.Historico_Medico:
+        if not SistemaHospital.Historico_Medico:
             resultado += "Nenhum histórico registrado.\n"
             return resultado
         
-        for numero_funcionario in Paciente_historicos.Historico_Medico:
-            pacientes_dict = Paciente_historicos.Historico_Medico[numero_funcionario]
-            if numero_funcionario in Paciente_historicos.Funcionarios:
-                funcionario_info = Paciente_historicos.Funcionarios[numero_funcionario]
+        for numero_funcionario in SistemaHospital.Historico_Medico:
+            pacientes_dict = SistemaHospital.Historico_Medico[numero_funcionario]
+            if numero_funcionario in SistemaHospital.Funcionarios:
+                funcionario_info = SistemaHospital.Funcionarios[numero_funcionario]
                 resultado += f"\nMédico/Funcionário: {funcionario_info.nome} (#{numero_funcionario})\n"
                 
                 for numero_paciente in pacientes_dict:
                     historicos_dict = pacientes_dict[numero_paciente]
-                    if numero_paciente in Paciente_historicos.Pacientes:
-                        paciente_info = Paciente_historicos.Pacientes[numero_paciente]
+                    if numero_paciente in SistemaHospital.Pacientes:
+                        paciente_info = SistemaHospital.Pacientes[numero_paciente]
                         resultado += f"Paciente: {paciente_info.nome} (#{numero_paciente})\n"
                         
                         for id_historico in historicos_dict:
@@ -956,7 +951,7 @@ class Paciente_historicos:
     
     @staticmethod
     def limpar():
-        Paciente_historicos.Pacientes.clear()
-        Paciente_historicos.Funcionarios.clear()
-        Paciente_historicos.Historico_Medico.clear()
+        SistemaHospital.Pacientes.clear()
+        SistemaHospital.Funcionarios.clear()
+        SistemaHospital.Historico_Medico.clear()
 

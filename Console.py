@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, date
 import os
 from Program import (
     SistemaHospital, Funcionario, Medico, Enfermeiro, Paciente,
-    Cargo, StatusSala, StatusAtendimento, SalaEspera, Paciente_historicos,
+    Cargo, StatusSala, StatusAtendimento, SalaEspera, SistemaHospital,
     Administrativo, EnfermeiroChefe, SalaCirurgia
 )
 from Horario import (
@@ -122,7 +122,6 @@ def criar_horario_interativo() -> Horario_Semanal:
     return horario_semanal
 
 class InterfaceHospital:
-
     def __init__(self):
         self.sistema = SistemaHospital()
 
@@ -501,15 +500,6 @@ class InterfaceHospital:
             "4": ("Estatísticas do hospital", self.estatisticas_hospital),
         }
         self.exibir_menu_generico("Pacientes", opcoes)
-
-    def menu_customizacao_manual(self):
-        opcoes = {
-            "1": ("Criar nova área especializada", self.criar_area_customizada),
-            "2": ("Registar novo funcionário", self.registar_funcionario_customizado),
-            "3": ("Ver áreas criadas", self.listar_areas),
-            "4": ("Ver funcionários registados", self.listar_funcionarios),
-        }
-        self.exibir_menu_generico("Customização manual - áreas e funcionários", opcoes)
 
     def criar_area_customizada(self):
         print("Criar nova área especializada:")
@@ -1082,14 +1072,6 @@ class InterfaceHospital:
 
         sala_com_atendimento.finalizar_atendimento(descricao)
 
-    def menu_relatorios(self):
-        opcoes = {
-            "1": ("Relatório de Funcionário", self.relatorio_funcionario),
-            "2": ("Relatório de Paciente", self.relatorio_paciente),
-            "3": ("Estatísticas do Hospital", self.estatisticas_hospital),
-        }
-        self.exibir_menu_generico("Relatórios", opcoes)
-
     def relatorio_funcionario(self):
         funcionario = self.selecionar_funcionario("Relatório de funcionário:")
         if not funcionario:
@@ -1161,7 +1143,7 @@ class InterfaceHospital:
         if not funcionario:
             return
 
-        if Paciente_historicos.adicionar_funcionario(funcionario):
+        if SistemaHospital.adicionar_funcionario(funcionario):
             print(f"Funcionario {funcionario.nome} adicionado ao sistema de historico!")
         else:
             print("Erro ao adicionar funcionário!")
@@ -1169,7 +1151,7 @@ class InterfaceHospital:
     def registrar_atendimento_historico(self):
         print("\nRegistrar atendimento medico:")
 
-        if not Paciente_historicos.Funcionarios:
+        if not SistemaHospital.Funcionarios:
             print("Nenhum médico registrado no histórico!")
             return
 
@@ -1180,8 +1162,8 @@ class InterfaceHospital:
         print("\nMédicos/Funcionários disponíveis:")
         
         i = 1
-        for numero_funcionario in Paciente_historicos.Funcionarios.keys():
-            funcionario = Paciente_historicos.Funcionarios[numero_funcionario]
+        for numero_funcionario in SistemaHospital.Funcionarios.keys():
+            funcionario = SistemaHospital.Funcionarios[numero_funcionario]
             print(f"{i} - {funcionario.nome} (#{numero_funcionario})")
             i += 1
 
@@ -1190,7 +1172,7 @@ class InterfaceHospital:
             
             contador = 1
             numero_funcionario_selecionado = None
-            for numero_funcionario in Paciente_historicos.Funcionarios.keys():
+            for numero_funcionario in SistemaHospital.Funcionarios.keys():
                 if contador == escolha_funcionario:
                     numero_funcionario_selecionado = numero_funcionario
                     break
@@ -1205,13 +1187,13 @@ class InterfaceHospital:
                 return
 
             # Adiciona o Paciente ao histórico se ainda não existe
-            if paciente.numero_utente not in Paciente_historicos.Pacientes or Paciente_historicos.Pacientes[paciente.numero_utente] is None:
-                Paciente_historicos.adicionar_paciente(paciente)
+            if paciente.numero_utente not in SistemaHospital.Pacientes or SistemaHospital.Pacientes[paciente.numero_utente] is None:
+                SistemaHospital.adicionar_paciente(paciente)
 
             id_historico = int(input("\nId do atendimento (número inteiro): "))
             descricao = input("Descrição do atendimento: ").strip()
 
-            if Paciente_historicos.adicionar_historico(numero_funcionario_selecionado, paciente.numero_utente, id_historico, descricao):
+            if SistemaHospital.adicionar_historico(numero_funcionario_selecionado, paciente.numero_utente, id_historico, descricao):
                 print("Atendimento registrado com sucesso!")
             else:
                 print("Erro ao registrar atendimento (Id duplicado ou dados inválidos)!")
@@ -1231,7 +1213,7 @@ class InterfaceHospital:
             return
 
         try:
-            historicos = Paciente_historicos.obter_historicos_paciente(paciente.numero_utente)
+            historicos = SistemaHospital.obter_historicos_paciente(paciente.numero_utente)
             
             if not historicos:
                 print(f"\nNenhum historico registrado para {paciente.nome}!")
@@ -1249,15 +1231,15 @@ class InterfaceHospital:
     def ver_pacientes_funcionario(self):
         print("\nVer pacientes atendidos por funcionario:")
 
-        if not Paciente_historicos.Funcionarios:
+        if not SistemaHospital.Funcionarios:
             print("Nenhum funcionário no histórico!")
             return
 
         print("\nFuncionários com histórico:")
         
         i = 1
-        for numero_funcionario in Paciente_historicos.Funcionarios.keys():
-            funcionario = Paciente_historicos.Funcionarios[numero_funcionario]
+        for numero_funcionario in SistemaHospital.Funcionarios.keys():
+            funcionario = SistemaHospital.Funcionarios[numero_funcionario]
             print(f"{i} - {funcionario.nome} (#{numero_funcionario})")
             i += 1
 
@@ -1268,10 +1250,10 @@ class InterfaceHospital:
             numero_funcionario_selecionado = None
             funcionario_selecionado = None
             
-            for numero_funcionario in Paciente_historicos.Funcionarios.keys():
+            for numero_funcionario in SistemaHospital.Funcionarios.keys():
                 if contador == escolha:
                     numero_funcionario_selecionado = numero_funcionario
-                    funcionario_selecionado = Paciente_historicos.Funcionarios[numero_funcionario]
+                    funcionario_selecionado = SistemaHospital.Funcionarios[numero_funcionario]
                     break
 
                 contador += 1
@@ -1280,7 +1262,7 @@ class InterfaceHospital:
                 print("Opção inválida!")
                 return
             
-            pacientes_numeros = Paciente_historicos.obter_pacientes_funcionario(numero_funcionario_selecionado)
+            pacientes_numeros = SistemaHospital.obter_pacientes_funcionario(numero_funcionario_selecionado)
             
             if not pacientes_numeros:
                 print(f"\n{funcionario_selecionado.nome} nao atendeu nenhum paciente!")
@@ -1288,9 +1270,9 @@ class InterfaceHospital:
                 print(f"\nPacientes atendidos por {funcionario_selecionado.nome} (#{numero_funcionario_selecionado}):")
                 
                 for numero_utente in pacientes_numeros:
-                    if numero_utente in Paciente_historicos.Pacientes:
-                        paciente = Paciente_historicos.Pacientes[numero_utente]
-                        historicos = Paciente_historicos.obter_historicos_funcionario_paciente(numero_funcionario_selecionado, numero_utente)
+                    if numero_utente in SistemaHospital.Pacientes:
+                        paciente = SistemaHospital.Pacientes[numero_utente]
+                        historicos = SistemaHospital.obter_historicos_funcionario_paciente(numero_funcionario_selecionado, numero_utente)
                         print(f"\n{paciente.nome} (#{numero_utente:09d})")
                         
                         for id_historico in historicos.keys():
@@ -1301,7 +1283,7 @@ class InterfaceHospital:
             print("Valor inválido!")
 
     def listar_todos_historicos(self):
-        print(Paciente_historicos.listar_todos_historicos())
+        print(SistemaHospital.listar_todos_historicos())
 
     def menu_horarios(self):
         opcoes = {
