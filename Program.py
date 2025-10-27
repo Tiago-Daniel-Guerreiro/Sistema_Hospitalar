@@ -206,14 +206,14 @@ class Paciente(Pessoa):
 class Funcionario(Pessoa):
     def __init__(self, nome: str, idade: int, salario: float, numero_funcionario: int, cargo: Cargo, horario_semanal: Horario_Semanal):
         Pessoa.__init__(self, nome, idade)
+        self.regras_pagamento  = []
         self._numero_funcionario = numero_funcionario
         self._salario_base = max(0, salario) # O Salario não pode ser negativo
         self._cargo = cargo
-        
         self.horario_semanal = horario_semanal
         self.horario_funcionario = FuncionarioHorario(self.horario_semanal)
         self.atendimentos_realizados = []
-        self.regras_pagamento = [RegraSalarioBase()]
+        self.regras_pagamento.append(RegraSalarioBase())
 
     def __str__(self):
         atendimentos = self.obter_atendimentos()

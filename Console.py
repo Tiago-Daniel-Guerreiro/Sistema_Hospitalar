@@ -122,18 +122,16 @@ def criar_horario_interativo() -> Horario_Semanal:
     return horario_semanal
 
 class InterfaceHospital:
-    def __init__(self):
-        self.sistema = SistemaHospital()
-
-    def selecionar_funcionario(self, mensagem: str = "Funcionários:"):
-        if not self.sistema.funcionarios:
+    @staticmethod
+    def selecionar_funcionario(mensagem: str = "Funcionários:"):
+        if not SistemaHospital.funcionarios:
             print("\nNenhum funcionário registado!")
             return None
 
         print(f"\n{mensagem}")
         
         i = 1
-        for funcionario in self.sistema.funcionarios.values():
+        for funcionario in SistemaHospital.funcionarios.values():
             print(f"{i} - {funcionario.nome}")
             i += 1
 
@@ -141,7 +139,7 @@ class InterfaceHospital:
             escolha = int(input("\nEscolha o funcionário: "))
             
             contador = 1
-            for funcionario in self.sistema.funcionarios.values():
+            for funcionario in SistemaHospital.funcionarios.values():
                 if contador == escolha:
                     return funcionario
                 contador += 1
@@ -151,20 +149,21 @@ class InterfaceHospital:
         except ValueError:
             print("Valor inválido!")
         return None
-
-    def selecionar_paciente(self, mensagem: str = "Pacientes:", filtro=None): 
-        if not self.sistema.pacientes:
+    
+    @staticmethod
+    def selecionar_paciente(mensagem: str = "Pacientes:", filtro=None): 
+        if not SistemaHospital.pacientes:
             print("\nNenhum paciente registado!")
             return None
 
         pacientes_filtrados = []
         
         if filtro:
-            for paciente in self.sistema.pacientes.values():
+            for paciente in SistemaHospital.pacientes.values():
                 if filtro(paciente): # Exemplo de filtro: lambda paciente: paciente.idade > 18
                     pacientes_filtrados.append(paciente)
         else:
-            for paciente in self.sistema.pacientes.values():
+            for paciente in SistemaHospital.pacientes.values():
                 pacientes_filtrados.append(paciente)
 
         if not pacientes_filtrados:
@@ -193,8 +192,9 @@ class InterfaceHospital:
             print("Valor inválido!")
         
         return None
-
-    def obter_mes_ano(self):
+    
+    @staticmethod
+    def obter_mes_ano():
         mes_input = input("Mês (1-12, vazio=atual): ").strip()
         ano_input = input("Ano (vazio=atual): ").strip()
 
@@ -209,15 +209,17 @@ class InterfaceHospital:
 
         return mes, ano
 
-    def selecionar_area(self, mensagem: str = "Áreas de atendimento:"):
-        if not self.sistema.salas_espera:
+    
+    @staticmethod
+    def selecionar_area( mensagem: str = "Áreas de atendimento:"):
+        if not SistemaHospital.salas_espera:
             print("\nNenhuma área de atendimento registada!")
             return None
 
         print(f"\n{mensagem}")
         
         i = 1
-        for nome_area in self.sistema.salas_espera.keys():
+        for nome_area in SistemaHospital.salas_espera.keys():
             print(f"{i} - {nome_area}")
             i += 1
 
@@ -225,9 +227,9 @@ class InterfaceHospital:
             escolha = int(input("\nEscolha a área: "))
             
             contador = 1
-            for nome_area in self.sistema.salas_espera.keys():
+            for nome_area in SistemaHospital.salas_espera.keys():
                 if contador == escolha:
-                    return self.sistema.salas_espera[nome_area]
+                    return SistemaHospital.salas_espera[nome_area]
                 
                 contador += 1
             
@@ -237,8 +239,9 @@ class InterfaceHospital:
             print("Valor inválido!")
 
         return None
-
-    def exibir_menu_generico(self, titulo: str, opcoes: dict, sair_texto: str = "Voltar"):
+    
+    @staticmethod
+    def exibir_menu_generico(titulo: str, opcoes: dict, sair_texto: str = "Voltar"):
         while True:
             aguardar_e_limpar()
             print(f"\n{titulo}:")
@@ -267,67 +270,70 @@ class InterfaceHospital:
                     acao() # Executa ação correspondente
             else:
                 print("Opção inválida!")
-
-    def inicializar_dados_padrao(self):
+    
+    @staticmethod
+    def inicializar_dados():
         print("\nSistema hospitalar - inicialização:")
 
         resposta = input("Deseja inicializar os dados padrão? (s/n, padrão: n): ").strip().lower()
 
         if resposta == 's':
             print("\nCarregando dados padrão...")
-            self.configuracao_padrao()
+            InterfaceHospital.configuracao_padrao()
             print("Dados padrão carregados com sucesso!")
         else:
             print("\nSistema inicializado sem dados definidos.")
-        
-        self.menu_principal()
 
-    def menu_principal(self):
+        InterfaceHospital.menu_principal()
+
+    @staticmethod
+    def menu_principal():
         opcoes = {
-            "1": ("Funcionários", self.menu_funcionarios),
-            "2": ("Recepção (Registrar/Encaminhar Pacientes)", self.menu_recepcao),
-            "3": ("Áreas de Atendimento", self.menu_areas),
-            "4": ("Salas", self.menu_salas),
-            "5": ("Salas de Cirurgia", self.menu_salas_cirurgia),
-            "6": ("Pacientes", self.menu_pacientes),
-            "7": ("Histórico Médico", self.menu_historico_medico),
+            "1": ("Funcionários", InterfaceHospital.menu_funcionarios),
+            "2": ("Recepção (Registrar/Encaminhar Pacientes)", InterfaceHospital.menu_recepcao),
+            "3": ("Áreas de Atendimento", InterfaceHospital.menu_areas),
+            "4": ("Salas", InterfaceHospital.menu_salas),
+            "5": ("Salas de Cirurgia", InterfaceHospital.menu_salas_cirurgia),
+            "6": ("Pacientes", InterfaceHospital.menu_pacientes),
+            "7": ("Histórico Médico", InterfaceHospital.menu_historico_medico),
         }
-        self.exibir_menu_generico("Sistema hospitalar - Menu principal", opcoes, sair_texto="Sair")
+        InterfaceHospital.exibir_menu_generico("Sistema hospitalar - Menu principal", opcoes, sair_texto="Sair")
 
-    def configuracao_padrao(self):
-        self.sistema.criar_area_especializada("Cardiologia", 3, "C")
-        self.sistema.criar_area_especializada("Cirurgia Geral", 3, "CG")
-        self.sistema.criar_area_especializada("Medicina Interna", 3, "MI")
-        self.sistema.criar_area_especializada("Psiquiatria", 2, "PS")
-        self.sistema.criar_area_especializada("Medicina Geral", 2, "MG")
+    @staticmethod
+    def configuracao_padrao():
+        SistemaHospital.criar_area_especializada("Cardiologia", 3, "C")
+        SistemaHospital.criar_area_especializada("Cirurgia Geral", 3, "CG")
+        SistemaHospital.criar_area_especializada("Medicina Interna", 3, "MI")
+        SistemaHospital.criar_area_especializada("Psiquiatria", 2, "PS")
+        SistemaHospital.criar_area_especializada("Medicina Geral", 2, "MG")
 
         horario_base = criar_horario_padrao() # Cria o horário base padrão (09:00 - 18:00, Segunda a Sexta)
 
-        self.sistema.registrar_funcionario(Medico(nome="Doutor João Silva", idade=45, salario=3000, numero_funcionario=1001, especialidade=Cargo.Saude.Medico.Cardiologia, horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(Medico(nome="Doutora Maria Santos", idade=38, salario=2900, numero_funcionario=1002, especialidade=Cargo.Saude.Medico.CirurgiaGeral, horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(Medico(nome="Doutor Pedro Costa", idade=50, salario=3100, numero_funcionario=1003, especialidade=Cargo.Saude.Medico.MedicinaInterna, horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(Medico(nome="Doutora Sofia Ferreira", idade=41, salario=3200, numero_funcionario=1004, especialidade=Cargo.Saude.Medico.Psiquiatria, horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(Medico(nome="Doutor Rui Lopes", idade=36, salario=2800, numero_funcionario=1005, especialidade=Cargo.Saude.Medico.Geral, horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(Medico(nome="Doutora Carla Mendes", idade=43, salario=3050, numero_funcionario=1006, especialidade=Cargo.Saude.Medico.Cardiologia, horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(Medico(nome="Doutor André Almeida", idade=39, salario=2950, numero_funcionario=1007, especialidade=Cargo.Saude.Medico.CirurgiaGeral, horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(Medico(nome="Doutora Rita Sousa", idade=34, salario=2750, numero_funcionario=1008, especialidade=Cargo.Saude.Medico.MedicinaInterna, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Medico(nome="Doutor João Silva", idade=45, salario=3000, numero_funcionario=1001, especialidade=Cargo.Saude.Medico.Cardiologia, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Medico(nome="Doutora Maria Santos", idade=38, salario=2900, numero_funcionario=1002, especialidade=Cargo.Saude.Medico.CirurgiaGeral, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Medico(nome="Doutor Pedro Costa", idade=50, salario=3100, numero_funcionario=1003, especialidade=Cargo.Saude.Medico.MedicinaInterna, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Medico(nome="Doutora Sofia Ferreira", idade=41, salario=3200, numero_funcionario=1004, especialidade=Cargo.Saude.Medico.Psiquiatria, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Medico(nome="Doutor Rui Lopes", idade=36, salario=2800, numero_funcionario=1005, especialidade=Cargo.Saude.Medico.Geral, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Medico(nome="Doutora Carla Mendes", idade=43, salario=3050, numero_funcionario=1006, especialidade=Cargo.Saude.Medico.Cardiologia, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Medico(nome="Doutor André Almeida", idade=39, salario=2950, numero_funcionario=1007, especialidade=Cargo.Saude.Medico.CirurgiaGeral, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Medico(nome="Doutora Rita Sousa", idade=34, salario=2750, numero_funcionario=1008, especialidade=Cargo.Saude.Medico.MedicinaInterna, horario_semanal=horario_base))
 
-        self.sistema.registrar_funcionario(Enfermeiro(nome="Enfermeiro Ana Oliveira", idade=32, salario=1800, numero_funcionario=2001, horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(Enfermeiro(nome="Enfermeiro Carlos Dias", idade=35, salario=1900, numero_funcionario=2002, horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(Enfermeiro(nome="Enfermeiro Paula Rodrigues", idade=29, salario=1750, numero_funcionario=2003, horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(Enfermeiro(nome="Enfermeiro Miguel Tavares", idade=31, salario=1850, numero_funcionario=2004, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Enfermeiro(nome="Enfermeiro Ana Oliveira", idade=32, salario=1800, numero_funcionario=2001, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Enfermeiro(nome="Enfermeiro Carlos Dias", idade=35, salario=1900, numero_funcionario=2002, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Enfermeiro(nome="Enfermeiro Paula Rodrigues", idade=29, salario=1750, numero_funcionario=2003, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Enfermeiro(nome="Enfermeiro Miguel Tavares", idade=31, salario=1850, numero_funcionario=2004, horario_semanal=horario_base))
 
-        self.sistema.registrar_funcionario(Enfermeiro(nome="Enfermeiro Beatriz Martins", idade=27, salario=1700, numero_funcionario=2005, horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(Enfermeiro(nome="Enfermeiro Gonçalo Pires", idade=33, salario=1950, numero_funcionario=2006, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Enfermeiro(nome="Enfermeiro Beatriz Martins", idade=27, salario=1700, numero_funcionario=2005, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Enfermeiro(nome="Enfermeiro Gonçalo Pires", idade=33, salario=1950, numero_funcionario=2006, horario_semanal=horario_base))
 
-        self.sistema.registrar_funcionario(EnfermeiroChefe(nome="Enfermeiro Chefe Teresa Silva", idade=42, salario=2500, numero_funcionario=2100, setor="UTI", bonus_percentual_chefia=15.0, horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(EnfermeiroChefe(nome="Enfermeiro Chefe Manuel Costa", idade=48, salario=2600, numero_funcionario=2101, setor="Urgências", bonus_percentual_chefia=18.0, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(EnfermeiroChefe(nome="Enfermeiro Chefe Teresa Silva", idade=42, salario=2500, numero_funcionario=2100, setor="UTI", bonus_percentual_chefia=15.0, horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(EnfermeiroChefe(nome="Enfermeiro Chefe Manuel Costa", idade=48, salario=2600, numero_funcionario=2101, setor="Urgências", bonus_percentual_chefia=18.0, horario_semanal=horario_base))
 
-        self.sistema.registrar_funcionario(Administrativo(nome="Adminstrador Isabel Cunha",idade=40,salario=1500,numero_funcionario=3001,setor="Recursos Humanos",horas_registradas=40.0,horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(Administrativo(nome="Adminstrador Francisco Gomes",idade=37,salario=1600,numero_funcionario=3002,setor="Contabilidade",horas_registradas=40.0,horario_semanal=horario_base))
-        self.sistema.registrar_funcionario(Administrativo(nome="Adminstrador Luísa Pereira",idade=35,salario=1550,numero_funcionario=3003,setor="Receção",horas_registradas=35.0,horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Administrativo(nome="Adminstrador Isabel Cunha",idade=40,salario=1500,numero_funcionario=3001,setor="Recursos Humanos",horas_registradas=40.0,horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Administrativo(nome="Adminstrador Francisco Gomes",idade=37,salario=1600,numero_funcionario=3002,setor="Contabilidade",horas_registradas=40.0,horario_semanal=horario_base))
+        SistemaHospital.registrar_funcionario(Administrativo(nome="Adminstrador Luísa Pereira",idade=35,salario=1550,numero_funcionario=3003,setor="Receção",horas_registradas=35.0,horario_semanal=horario_base))
 
-        sala_cirurgia1 = self.sistema.criar_sala_cirurgia("Centro Cirúrgico 1", 10)
+        sala_cirurgia1 = SistemaHospital.criar_sala_cirurgia("Centro Cirúrgico 1", 10)
         sala_cirurgia1.adicionar_equipamento("Bisturi Elétrico")
         sala_cirurgia1.adicionar_equipamento("Mesa Cirúrgica")
         sala_cirurgia1.adicionar_equipamento("Monitor de Sinais Vitais")
@@ -335,7 +341,7 @@ class InterfaceHospital:
         sala_cirurgia1.adicionar_equipamento("Anestesia")
         sala_cirurgia1.adicionar_equipamento("Aspirador Cirúrgico")
 
-        sala_cirurgia2 = self.sistema.criar_sala_cirurgia("Centro Cirúrgico 2", 12)
+        sala_cirurgia2 = SistemaHospital.criar_sala_cirurgia("Centro Cirúrgico 2", 12)
         sala_cirurgia2.adicionar_equipamento("Bisturi Elétrico")
         sala_cirurgia2.adicionar_equipamento("Mesa Cirúrgica")
         sala_cirurgia2.adicionar_equipamento("Monitor de Sinais Vitais")
@@ -343,77 +349,81 @@ class InterfaceHospital:
         sala_cirurgia2.adicionar_equipamento("Raio-X Portátil")
         sala_cirurgia2.adicionar_equipamento("Sistema de Vídeo Cirúrgico")
 
-        sala_cirurgia3 = self.sistema.criar_sala_cirurgia("Centro Cirúrgico 3", 8)
+        sala_cirurgia3 = SistemaHospital.criar_sala_cirurgia("Centro Cirúrgico 3", 8)
         sala_cirurgia3.adicionar_equipamento("Bisturi Elétrico")
         sala_cirurgia3.adicionar_equipamento("Mesa Cirúrgica")
         sala_cirurgia3.adicionar_equipamento("Monitor de Sinais Vitais")
         sala_cirurgia3.adicionar_equipamento("Desfibrilador")
 
-        self.sistema.registrar_paciente("Manuel Oliveira", 65)
-        self.sistema.registrar_paciente("Ana Paula Silva", 42)
-        self.sistema.registrar_paciente("José Carlos Santos", 58)
-        self.sistema.registrar_paciente("Maria João Costa", 33)
-        self.sistema.registrar_paciente("António Ferreira", 71)
-        self.sistema.registrar_paciente("Helena Lopes", 28)
-        self.sistema.registrar_paciente("Ricardo Mendes", 45)
-        self.sistema.registrar_paciente("Inês Almeida", 19)
-        self.sistema.registrar_paciente("Fernando Sousa", 53)
-        self.sistema.registrar_paciente("Cristina Rodrigues", 61)
-        self.sistema.registrar_paciente("Paulo Tavares", 38)
-        self.sistema.registrar_paciente("Sandra Martins", 47)
-        self.sistema.registrar_paciente("Vasco Pires", 25)
-        self.sistema.registrar_paciente("Mariana Cunha", 31)
-        self.sistema.registrar_paciente("Jorge Gomes", 69)
-        self.sistema.registrar_paciente("Patrícia Pereira", 36)
-        self.sistema.registrar_paciente("Tiago Ribeiro", 22)
-        self.sistema.registrar_paciente("Mónica Carvalho", 54)
-        self.sistema.registrar_paciente("Daniel Nunes", 40)
-        self.sistema.registrar_paciente("Vera Correia", 29)
-
-    def menu_funcionarios(self):
+        SistemaHospital.registrar_paciente("Manuel Oliveira", 65)
+        SistemaHospital.registrar_paciente("Ana Paula Silva", 42)
+        SistemaHospital.registrar_paciente("José Carlos Santos", 58)
+        SistemaHospital.registrar_paciente("Maria João Costa", 33)
+        SistemaHospital.registrar_paciente("António Ferreira", 71)
+        SistemaHospital.registrar_paciente("Helena Lopes", 28)
+        SistemaHospital.registrar_paciente("Ricardo Mendes", 45)
+        SistemaHospital.registrar_paciente("Inês Almeida", 19)
+        SistemaHospital.registrar_paciente("Fernando Sousa", 53)
+        SistemaHospital.registrar_paciente("Cristina Rodrigues", 61)
+        SistemaHospital.registrar_paciente("Paulo Tavares", 38)
+        SistemaHospital.registrar_paciente("Sandra Martins", 47)
+        SistemaHospital.registrar_paciente("Vasco Pires", 25)
+        SistemaHospital.registrar_paciente("Mariana Cunha", 31)
+        SistemaHospital.registrar_paciente("Jorge Gomes", 69)
+        SistemaHospital.registrar_paciente("Patrícia Pereira", 36)
+        SistemaHospital.registrar_paciente("Tiago Ribeiro", 22)
+        SistemaHospital.registrar_paciente("Mónica Carvalho", 54)
+        SistemaHospital.registrar_paciente("Daniel Nunes", 40)
+        SistemaHospital.registrar_paciente("Vera Correia", 29)
+    
+    @staticmethod
+    def menu_funcionarios():
         opcoes = {
-            "1": ("Listar funcionários", self.listar_funcionarios),
-            "2": ("Registar novo funcionário", self.registar_funcionario_customizado),
-            "3": ("Ver histórico de atendimentos de um funcionário", self.relatorio_funcionario),
-            "4": ("Ver horário e horas de um funcionário", self.ver_horario_funcionario),
-            "5": ("Ver pagamento mensal de um funcionário", self.ver_pagamento_funcionario),
-            "6": ("Gerir horários de funcionário", self.menu_horarios),
-            "7": ("Registar ponto", self.registar_ponto),
+            "1": ("Listar funcionários", InterfaceHospital.listar_funcionarios),
+            "2": ("Registar novo funcionário", InterfaceHospital.registar_funcionario_customizado),
+            "3": ("Ver histórico de atendimentos de um funcionário", InterfaceHospital.relatorio_funcionario),
+            "4": ("Ver horário e horas de um funcionário", InterfaceHospital.ver_horario_funcionario),
+            "5": ("Ver pagamento mensal de um funcionário", InterfaceHospital.ver_pagamento_funcionario),
+            "6": ("Gerir horários de funcionário", InterfaceHospital.menu_horarios),
+            "7": ("Registar ponto", InterfaceHospital.registar_ponto),
         }
-        self.exibir_menu_generico("Funcionários", opcoes)
-
-    def menu_salas(self):
+        InterfaceHospital.exibir_menu_generico("Funcionários", opcoes)
+    
+    @staticmethod
+    def menu_salas():
         opcoes = {
-            "1": ("Listar salas", self.listar_areas),
-            "2": ("Criar nova área (com salas)", self.criar_area_customizada),
-            "3": ("Ver status das salas", self.listar_status_salas),
-            "4": ("Gerenciar funcionário da sala", self.gerenciar_funcionario_sala),
+            "1": ("Listar salas", InterfaceHospital.listar_areas),
+            "2": ("Criar nova área (com salas)", InterfaceHospital.criar_area_customizada),
+            "3": ("Ver status das salas", InterfaceHospital.listar_status_salas),
+            "4": ("Gerenciar funcionário da sala", InterfaceHospital.gerenciar_funcionario_sala),
         }
-        self.exibir_menu_generico("Salas", opcoes)
-
-    def gerenciar_funcionario_sala(self):
-        sala = self.obter_Sala_por_Area(self.obter_Id_Area())
+        InterfaceHospital.exibir_menu_generico("Salas", opcoes)
+    
+    @staticmethod
+    def gerenciar_funcionario_sala():
+        sala = InterfaceHospital.obter_Sala_por_Area(InterfaceHospital.obter_Id_Area())
 
         if sala is None:
             print("Sala não encontrada!")
             return
 
         opcoes = {
-            "1": ("Adicionar funcionário à sala", lambda: self.adicionar_Funcionario_Sala(sala)),
-            "2": ("Remover funcionário da sala", lambda: self.remover_Funcionario_Sala(sala)),
-            "3": ("Definir responsável da sala", lambda: self.definir_Funcionario_Sala(sala)),
-            "4": ("Listar funcionários da sala", lambda: self.listar_Funcionarios_Sala(sala)),
+            "1": ("Adicionar funcionário à sala", lambda: InterfaceHospital.adicionar_Funcionario_Sala(sala)),
+            "2": ("Remover funcionário da sala", lambda: InterfaceHospital.remover_Funcionario_Sala(sala)),
+            "3": ("Definir responsável da sala", lambda: InterfaceHospital.definir_Funcionario_Sala(sala)),
+            "4": ("Listar funcionários da sala", lambda: InterfaceHospital.listar_Funcionarios_Sala(sala)),
         }
 
-        self.exibir_menu_generico(f"Gerenciar Funcionário da Sala: {sala.nome}", opcoes, sair_texto="Voltar")
-    
-    def obter_Id_Area(self) -> int: 
-        if not self.sistema.salas_espera:
+        InterfaceHospital.exibir_menu_generico(f"Gerenciar Funcionário da Sala: {sala.nome}", opcoes, sair_texto="Voltar")
+
+    @staticmethod
+    def obter_Id_Area() -> int:
+        if not SistemaHospital.salas_espera:
             print("Nenhuma área criada!")
             return
         
         print("Áreas disponíveis:")
-        areas = list(self.sistema.salas_espera.keys())
+        areas = list(SistemaHospital.salas_espera.keys())
 
         i = 1
         for nome in areas:
@@ -432,12 +442,13 @@ class InterfaceHospital:
         
         return id_Area
 
-    def obter_Sala_por_Area(self, id_area: int) -> SalaEspera:
+    @staticmethod
+    def obter_Sala_por_Area(id_area: int) -> SalaEspera:
         if id_area is None:
             return
         
-        areas = list(self.sistema.salas_espera.keys())
-        sala_espera = self.sistema.salas_espera[areas[id_area]]
+        areas = list(SistemaHospital.salas_espera.keys())
+        sala_espera = SistemaHospital.salas_espera[areas[id_area]]
 
         if not sala_espera.salas_atendimento:
             print("Nenhuma sala de atendimento nesta área!")
@@ -461,47 +472,55 @@ class InterfaceHospital:
 
         return sala_espera.salas_atendimento[id_sala]
 
-    def adicionar_Funcionario_Sala(self, sala):
-        funcionario = self.selecionar_funcionario()
+    @staticmethod
+    def adicionar_Funcionario_Sala(sala):
+        funcionario = InterfaceHospital.selecionar_funcionario()
         if funcionario:
             sala.adicionar_funcionario(funcionario)
 
-    def remover_Funcionario_Sala(self, sala):
-        funcionario = self.selecionar_funcionario()
+    @staticmethod
+    def remover_Funcionario_Sala(sala):
+        funcionario = InterfaceHospital.selecionar_funcionario()
         if funcionario:
             sala.remover_funcionario(funcionario)
 
-    def definir_Funcionario_Sala(self, sala):
-        funcionario = self.selecionar_funcionario()
+    @staticmethod
+    def definir_Funcionario_Sala(sala):
+        funcionario = InterfaceHospital.selecionar_funcionario()
         if funcionario:
             sala.definir_funcionario_atual(funcionario)
 
-    def listar_Funcionarios_Sala(self, sala):
+    @staticmethod
+    def listar_Funcionarios_Sala(sala):
         print("Funcionários na sala:")
         for funcionario in sala.funcionarios:
             print(f"- {funcionario.nome} ({funcionario.cargo.value})")
         if sala.funcionario_atual:
             print(f"Responsável atual: {sala.funcionario_atual.nome}")
 
-    def menu_salas_cirurgia(self):
+    
+    @staticmethod
+    def menu_salas_cirurgia():
         opcoes = {
-            "1": ("Criar sala de cirurgia", self.criar_sala_cirurgia),
-            "2": ("Listar salas de cirurgia", self.listar_salas_cirurgia),
-            "3": ("Adicionar equipamento a sala", self.adicionar_equipamento_sala),
-            "4": ("Ver detalhes de sala", self.ver_detalhes_sala_cirurgia),
+            "1": ("Criar sala de cirurgia", InterfaceHospital.criar_sala_cirurgia),
+            "2": ("Listar salas de cirurgia", InterfaceHospital.listar_salas_cirurgia),
+            "3": ("Adicionar equipamento a sala", InterfaceHospital.adicionar_equipamento_sala),
+            "4": ("Ver detalhes de sala", InterfaceHospital.ver_detalhes_sala_cirurgia),
         }
-        self.exibir_menu_generico("Salas de Cirurgia", opcoes)
+        InterfaceHospital.exibir_menu_generico("Salas de Cirurgia", opcoes)
 
-    def menu_pacientes(self):
+    @staticmethod
+    def menu_pacientes():
         opcoes = {
-            "1": ("Registar novo paciente", self.registar_novo_paciente),
-            "2": ("Ver todos os pacientes", self.listar_pacientes_completo),
-            "3": ("Ver histórico de um paciente", self.relatorio_paciente),
-            "4": ("Estatísticas do hospital", self.estatisticas_hospital),
+            "1": ("Registar novo paciente", InterfaceHospital.registar_novo_paciente),
+            "2": ("Ver todos os pacientes", InterfaceHospital.listar_pacientes_completo),
+            "3": ("Ver histórico de um paciente", InterfaceHospital.relatorio_paciente),
+            "4": ("Estatísticas do hospital", InterfaceHospital.estatisticas_hospital),
         }
-        self.exibir_menu_generico("Pacientes", opcoes)
+        InterfaceHospital.exibir_menu_generico("Pacientes", opcoes)
 
-    def criar_area_customizada(self):
+    @staticmethod
+    def criar_area_customizada():
         print("Criar nova área especializada:")
         
         nome = input("Nome da área (ex: Cardiologia): ").strip()
@@ -522,10 +541,11 @@ class InterfaceHospital:
         if sigla == "":
             sigla = nome[0].upper()
         
-        self.sistema.criar_area_especializada(nome, num_salas, sigla)
+        SistemaHospital.criar_area_especializada(nome, num_salas, sigla)
         print(f"A área {nome} criada com sucesso!")
 
-    def registar_funcionario_customizado(self):
+    @staticmethod
+    def registar_funcionario_customizado():
         print("\nRegistar novo funcionário:")
         
         nome = input("Nome do funcionário: ").strip()
@@ -627,40 +647,45 @@ class InterfaceHospital:
         else:
             funcionario = Funcionario(nome, idade, salario, num_funcionario, cargo, horario_base)
         
-        self.sistema.registrar_funcionario(funcionario)
+        SistemaHospital.registrar_funcionario(funcionario)
         print(f"Funcionário {nome} registado com sucesso!")
 
-    def listar_areas(self):
+    
+    @staticmethod
+    def listar_areas():
         print("\nÁreas especializadas:")
         
-        if not self.sistema.salas_espera:
+        if not SistemaHospital.salas_espera:
             print("Nenhuma área criada ainda.")
             return
         
-        for area_nome in self.sistema.salas_espera.keys():
-            sala_espera = self.sistema.salas_espera[area_nome]
+        for area_nome in SistemaHospital.salas_espera.keys():
+            sala_espera = SistemaHospital.salas_espera[area_nome]
             print(f"\n{area_nome}")
             print(f"Salas: {len(sala_espera.salas_atendimento)}")
             print(f"Pacientes em espera: {len(sala_espera.fila_espera)}")
-
-    def listar_funcionarios(self):
+    
+    @staticmethod
+    def listar_funcionarios():
         print("\nFuncionários registados:")
         
-        if not self.sistema.funcionarios:
+        if not SistemaHospital.funcionarios:
             print("Nenhum funcionário registado ainda.")
             return
         
         i = 1
-        for numero_funcionario in self.sistema.funcionarios.keys():
-            funcionario = self.sistema.funcionarios[numero_funcionario]
+        for numero_funcionario in SistemaHospital.funcionarios.keys():
+            funcionario = SistemaHospital.funcionarios[numero_funcionario]
             print(f"\n{i} - {str(funcionario)}")
 
             i += 1
+    
+    @staticmethod
+    def listar_pacientes_completo():
+        InterfaceHospital.listar_pacientes()
 
-    def listar_pacientes_completo(self):
-        self.listar_pacientes()
-
-    def registar_novo_paciente(self):
+    @staticmethod
+    def registar_novo_paciente():
         print("\nRegistar novo paciente:")
         
         nome = input("Nome do paciente: ").strip()
@@ -677,21 +702,22 @@ class InterfaceHospital:
             print("Idade inválida!")
             return
         
-        paciente = self.sistema.registrar_paciente(nome, idade)
+        paciente = SistemaHospital.registrar_paciente(nome, idade)
         print(f"\nPaciente registado com sucesso!")
         print(f"Nome: {paciente.nome}")
         print(f"Número de utente: {paciente.numero_utente}")
         print(f"Idade: {paciente.idade}")
-
-    def listar_status_salas(self):
+    
+    @staticmethod
+    def listar_status_salas():
         print("Status das salas:")
         
-        if not self.sistema.salas_espera:
+        if not SistemaHospital.salas_espera:
             print("Nenhuma área de atendimento criada ainda.")
             return
         
-        for area_nome in self.sistema.salas_espera.keys():
-            sala_espera = self.sistema.salas_espera[area_nome]
+        for area_nome in SistemaHospital.salas_espera.keys():
+            sala_espera = SistemaHospital.salas_espera[area_nome]
             print(f"\n{area_nome}")
             print(f"Salas de atendimento: {len(sala_espera.salas_atendimento)}")
             print(f"Pacientes em espera: {len(sala_espera.fila_espera)}")
@@ -709,8 +735,9 @@ class InterfaceHospital:
 
                 print(f"- Sala {i_sala}: {status}{paciente_info}")
                 i_sala += 1
-
-    def criar_sala_cirurgia(self):
+    
+    @staticmethod
+    def criar_sala_cirurgia():
         print("\nCriar nova sala de cirurgia:")
 
         nome = input("Nome da sala (ex: Centro Cirúrgico 1): ").strip()
@@ -718,7 +745,7 @@ class InterfaceHospital:
             print("Nome inválido!")
             return
 
-        if nome in self.sistema.salas_cirurgia:
+        if nome in SistemaHospital.salas_cirurgia:
             print(f"Já existe uma sala de cirurgia com o nome {nome}!")
             return
 
@@ -736,34 +763,36 @@ class InterfaceHospital:
             print("Número inválido!")
             return
         
-        sala = self.sistema.criar_sala_cirurgia(nome, capacidade)
+        sala = SistemaHospital.criar_sala_cirurgia(nome, capacidade)
         print(f"\nSala de cirurgia {nome} criada com sucesso!")
         print(f"Id: {sala.id_sala}")
         print(f"Capacidade: {sala.capacidade} pessoas")
-
-    def listar_salas_cirurgia(self):
+        
+    @staticmethod
+    def listar_salas_cirurgia():
         print("\nSalas de Cirurgia:")
         
-        if not self.sistema.salas_cirurgia:
+        if not SistemaHospital.salas_cirurgia:
             print("Nenhuma sala de cirurgia criada ainda.")
             return
         
-        for nome in self.sistema.salas_cirurgia.keys():
-            sala = self.sistema.salas_cirurgia[nome]
+        for nome in SistemaHospital.salas_cirurgia.keys():
+            sala = SistemaHospital.salas_cirurgia[nome]
             print(f"\n{nome}")
             print(f"Id: {sala.id_sala}")
             print(f"Capacidade: {sala.capacidade} pessoas")
             print(f"Equipamentos: {len(sala.equipamentos)}")
-
-    def adicionar_equipamento_sala(self):
-        if not self.sistema.salas_cirurgia:
+    
+    @staticmethod
+    def adicionar_equipamento_sala():
+        if not SistemaHospital.salas_cirurgia:
             print("\nNenhuma sala de cirurgia criada ainda!")
             return
 
         print("\nSalas de Cirurgia disponíveis:")
         
         i = 1
-        for nome_sala in self.sistema.salas_cirurgia.keys():
+        for nome_sala in SistemaHospital.salas_cirurgia.keys():
             print(f"{i} - {nome_sala}")
             i += 1
         
@@ -773,9 +802,9 @@ class InterfaceHospital:
             contador = 1
             sala_selecionada = None
 
-            for nome_sala in self.sistema.salas_cirurgia.keys():
+            for nome_sala in SistemaHospital.salas_cirurgia.keys():
                 if contador == escolha:
-                    sala_selecionada = self.sistema.salas_cirurgia[nome_sala]
+                    sala_selecionada = SistemaHospital.salas_cirurgia[nome_sala]
                     break
 
                 contador += 1
@@ -793,16 +822,17 @@ class InterfaceHospital:
             
         except ValueError:
             print("Valor inválido!")
-
-    def ver_detalhes_sala_cirurgia(self):
-        if not self.sistema.salas_cirurgia:
+    
+    @staticmethod
+    def ver_detalhes_sala_cirurgia():
+        if not SistemaHospital.salas_cirurgia:
             print("\nNenhuma sala de cirurgia criada ainda!")
             return
         
         print("\nSalas de Cirurgia disponíveis:")
         
         i = 1
-        for nome_sala in self.sistema.salas_cirurgia.keys():
+        for nome_sala in SistemaHospital.salas_cirurgia.keys():
             print(f"{i} - {nome_sala}")
             i += 1
         
@@ -812,9 +842,9 @@ class InterfaceHospital:
             contador = 1
             sala_selecionada = None
             
-            for nome_sala in self.sistema.salas_cirurgia.keys():
+            for nome_sala in SistemaHospital.salas_cirurgia.keys():
                 if contador == escolha:
-                    sala_selecionada = self.sistema.salas_cirurgia[nome_sala]
+                    sala_selecionada = SistemaHospital.salas_cirurgia[nome_sala]
                     break
 
                 contador += 1
@@ -828,14 +858,15 @@ class InterfaceHospital:
             
         except ValueError:
             print("Valor inválido!")
-
-    def ver_horario_funcionario(self):
-        funcionario = self.selecionar_funcionario("Horário de funcionário:")
+    
+    @staticmethod
+    def ver_horario_funcionario():
+        funcionario = InterfaceHospital.selecionar_funcionario("Horário de funcionário:")
         if not funcionario:
             return
 
         try:          
-            mes_ano = self.obter_mes_ano()
+            mes_ano = InterfaceHospital.obter_mes_ano()
 
             mes = mes_ano[0]
             ano = mes_ano[1]
@@ -853,14 +884,15 @@ class InterfaceHospital:
 
         except ValueError:
             print("Valor inválido!")
-
-    def ver_pagamento_funcionario(self):
-        funcionario = self.selecionar_funcionario("Pagamento mensal de funcionário:")
+    
+    @staticmethod
+    def ver_pagamento_funcionario():
+        funcionario = InterfaceHospital.selecionar_funcionario("Pagamento mensal de funcionário:")
         if not funcionario:
             return
 
         try:
-            mes_ano = self.obter_mes_ano()
+            mes_ano = InterfaceHospital.obter_mes_ano()
             mes = mes_ano[0]
             ano = mes_ano[1]
 
@@ -879,20 +911,22 @@ class InterfaceHospital:
 
         except ValueError:
             print("Valor inválido!")
-
-    def menu_recepcao(self):
-        if not self.sistema.salas_espera:
+    
+    @staticmethod
+    def menu_recepcao():
+        if not SistemaHospital.salas_espera:
             print("\nRealize a configuração inicial primeiro!")
             return
 
         opcoes = {
-            "1": ("Registar novo paciente", self.registar_novo_paciente),
-            "2": ("Ver pacientes registados", self.listar_pacientes),
-            "3": ("Enviar paciente para área de atendimento", self.enviar_paciente_para_atendimento),
+            "1": ("Registar novo paciente", InterfaceHospital.registar_novo_paciente),
+            "2": ("Ver pacientes registados", InterfaceHospital.listar_pacientes),
+            "3": ("Enviar paciente para área de atendimento", InterfaceHospital.enviar_paciente_para_atendimento),
         }
-        self.exibir_menu_generico("Recepção - gerenciar pacientes", opcoes)
-
-    def registar_novo_paciente(self):
+        InterfaceHospital.exibir_menu_generico("Recepção - gerenciar pacientes", opcoes)
+    
+    @staticmethod
+    def registar_novo_paciente():
         print("\nRegistar novo paciente:")
         try:
             nome = input("Nome do paciente: ").strip()
@@ -902,7 +936,7 @@ class InterfaceHospital:
                 print("Dados inválidos!")
                 return
 
-            paciente = self.sistema.registrar_paciente(nome, idade)
+            paciente = SistemaHospital.registrar_paciente(nome, idade)
             print(f"\nPaciente registado com sucesso!")
             print(f"Nº Utente: {paciente.numero_utente}")
             print(f"Nome: {paciente.nome}")
@@ -910,16 +944,17 @@ class InterfaceHospital:
 
         except ValueError:
             print("Erro ao processar dados!")
-
-    def listar_pacientes(self):
+    
+    @staticmethod
+    def listar_pacientes():
         print("\nPacientes registados:")
-        if not self.sistema.pacientes:
+        if not SistemaHospital.pacientes:
             print("Nenhum paciente registado!")
             return
 
-        print(f"Pacientes registrados({len(self.sistema.pacientes)}):\n")
-        for numero_utente in self.sistema.pacientes.keys():
-            paciente = self.sistema.pacientes[numero_utente]
+        print(f"Pacientes registrados({len(SistemaHospital.pacientes)}):\n")
+        for numero_utente in SistemaHospital.pacientes.keys():
+            paciente = SistemaHospital.pacientes[numero_utente]
             area_info = ""
             sala_info = ""
 
@@ -930,32 +965,34 @@ class InterfaceHospital:
                 sala_info = f" / Sala: {paciente.sala_atendimento}"
 
             print(f"{numero_utente} / {paciente.nome} / Idade: {paciente.idade} / Status: {paciente.status.value}{area_info} {sala_info}")
+    
+    @staticmethod
+    def filtro_paciente(paciente):
+        # Não mostrar se está em atendimento ou já tem senha
+        if paciente.status == StatusAtendimento.Atendimento:
+            return False
+        if paciente.senha is not None:
+            return False
+        return True
 
-    def enviar_paciente_para_atendimento(self):
-        if not self.sistema.pacientes:
+    @staticmethod
+    def enviar_paciente_para_atendimento():
+        if not SistemaHospital.pacientes:
             print("Nenhum paciente registado!")
             return
 
-        if not self.sistema.salas_espera:
+        if not SistemaHospital.salas_espera:
             print("Nenhuma área de atendimento disponível!")
             return
 
-        sala_espera = self.selecionar_area("Áreas de atendimento disponíveis:")
+        sala_espera = InterfaceHospital.selecionar_area("Áreas de atendimento disponíveis:")
         if not sala_espera:
             return
 
-
-        def filtro_paciente(paciente):
-            # Não mostrar se está em atendimento ou já tem senha
-            if paciente.status == StatusAtendimento.Atendimento:
-                return False
-            if paciente.senha is not None:
-                return False
-            return True
-
-        paciente = self.selecionar_paciente(
+        
+        paciente = InterfaceHospital.selecionar_paciente(
             "Pacientes disponíveis (sem atendimento e sem senha):",
-            filtro=filtro_paciente
+            filtro=InterfaceHospital.filtro_paciente
         )
 
         if not paciente:
@@ -964,8 +1001,8 @@ class InterfaceHospital:
         try:
             sala_espera.pegar_senha(paciente)
             area_nome_encontrado = "Desconhecida"
-            for nome_area in self.sistema.salas_espera.keys():
-                sala = self.sistema.salas_espera[nome_area]
+            for nome_area in SistemaHospital.salas_espera.keys():
+                sala = SistemaHospital.salas_espera[nome_area]
                 if sala == sala_espera:
                     area_nome_encontrado = nome_area
                     break
@@ -975,8 +1012,9 @@ class InterfaceHospital:
         except ValueError:
             print("Erro ao processar dados!")
 
-    def menu_areas(self):
-        if not self.sistema.salas_espera:
+    @staticmethod
+    def menu_areas():
+        if not SistemaHospital.salas_espera:
             print("Nenhuma área de atendimento configurada!")
             return
 
@@ -984,7 +1022,7 @@ class InterfaceHospital:
             print("\nÁreas de atendimento:")
 
             i = 1
-            for area_nome in self.sistema.salas_espera.keys():
+            for area_nome in SistemaHospital.salas_espera.keys():
                 print(f"{i} - {area_nome}")
                 i += 1
 
@@ -999,7 +1037,7 @@ class InterfaceHospital:
                 contador = 1
                 area_selecionada = None
 
-                for area_nome in self.sistema.salas_espera.keys():
+                for area_nome in SistemaHospital.salas_espera.keys():
                     if contador == opcao:
                         area_selecionada = area_nome
                         break
@@ -1010,26 +1048,28 @@ class InterfaceHospital:
                     print("Opção inválida!")
                     continue
 
-                self.gerenciar_area(area_selecionada)
+                InterfaceHospital.gerenciar_area(area_selecionada)
 
             except ValueError:
                 print("Valor inválido!")
 
-    def gerenciar_area(self, area_nome: str):
-        sala_espera = self.sistema.salas_espera[area_nome]
+    @staticmethod
+    def gerenciar_area(area_nome: str):
+        sala_espera = SistemaHospital.salas_espera[area_nome]
 
         opcoes = {
             "1": ("Painel de informações da área", lambda: sala_espera.mostrar_painel()),
-            "2": ("Chamar próximo paciente", lambda: self.chamar_proximo_paciente(sala_espera)),
-            "3": ("Finalizar atendimento", lambda: self.finalizar_atendimento(sala_espera)),
+            "2": ("Chamar próximo paciente", lambda: InterfaceHospital.chamar_proximo_paciente(sala_espera)),
+            "3": ("Finalizar atendimento", lambda: InterfaceHospital.finalizar_atendimento(sala_espera)),
         }
-        self.exibir_menu_generico(f"Opções da área {area_nome}", opcoes)
+        InterfaceHospital.exibir_menu_generico(f"Opções da área {area_nome}", opcoes)
 
-    def chamar_proximo_paciente(self, sala_espera: SalaEspera):
+    @staticmethod
+    def chamar_proximo_paciente(sala_espera: SalaEspera):
         # Filtra apenas funcionários que NÃO são administrativos
         funcionarios_validos = []
 
-        for funcionario in self.sistema.funcionarios.values():
+        for funcionario in SistemaHospital.funcionarios.values():
             if not isinstance(funcionario.cargo, Cargo.Administrativo):
                 if funcionario in sala_espera.funcionarios:
                     funcionarios_validos.append(funcionario)
@@ -1054,7 +1094,8 @@ class InterfaceHospital:
         except ValueError:
             print("Valor inválido!")
 
-    def finalizar_atendimento(self, sala_espera: SalaEspera):
+    @staticmethod
+    def finalizar_atendimento(sala_espera: SalaEspera):
         sala_com_atendimento = None
         
         for sala in sala_espera.salas_atendimento:
@@ -1072,41 +1113,44 @@ class InterfaceHospital:
 
         sala_com_atendimento.finalizar_atendimento(descricao)
 
-    def relatorio_funcionario(self):
-        funcionario = self.selecionar_funcionario("Relatório de funcionário:")
+    @staticmethod
+    def relatorio_funcionario():
+        funcionario = InterfaceHospital.selecionar_funcionario("Relatório de funcionário:")
         if not funcionario:
             return
 
-        relatorio = self.sistema.gerar_relatorio_funcionario(funcionario.numero_funcionario)
+        relatorio = SistemaHospital.gerar_relatorio_funcionario(funcionario.numero_funcionario)
         print(relatorio)
 
-    def relatorio_paciente(self):
-        paciente = self.selecionar_paciente("Relatório de paciente:")
+    @staticmethod
+    def relatorio_paciente():
+        paciente = InterfaceHospital.selecionar_paciente("Relatório de paciente:")
         if not paciente:
             return
 
-        relatorio = self.sistema.gerar_relatorio_paciente(paciente.numero_utente)
+        relatorio = SistemaHospital.gerar_relatorio_paciente(paciente.numero_utente)
         print(relatorio)
 
-    def estatisticas_hospital(self):
+    @staticmethod
+    def estatisticas_hospital():
         print("\nEstatisticas do hospital:")
 
-        print(f"\nPacientes registados: {len(self.sistema.pacientes)}")
-        print(f"Funcionários: {len(self.sistema.funcionarios)}")
-        print(f"Áreas de atendimento: {len(self.sistema.salas_espera)}")
+        print(f"\nPacientes registados: {len(SistemaHospital.pacientes)}")
+        print(f"Funcionários: {len(SistemaHospital.funcionarios)}")
+        print(f"Áreas de atendimento: {len(SistemaHospital.salas_espera)}")
 
         total_atendimentos = 0
-        for funcionario in self.sistema.funcionarios.values():
+        for funcionario in SistemaHospital.funcionarios.values():
             total_atendimentos += len(funcionario.obter_atendimentos())
 
         print(f"Total de atendimentos realizados: {total_atendimentos}")
 
-        if self.sistema.pacientes:
+        if SistemaHospital.pacientes:
             em_espera = 0
             em_atendimento = 0
             atendidos = 0
             sem_sala = 0
-            for paciente in self.sistema.pacientes.values():
+            for paciente in SistemaHospital.pacientes.values():
                 if paciente.status == StatusAtendimento.Espera:
                     em_espera += 1
                 elif paciente.status == StatusAtendimento.Atendimento:
@@ -1122,24 +1166,26 @@ class InterfaceHospital:
             print(f"Em atendimento: {em_atendimento}")
             print(f"Atendidos: {atendidos}")
 
-    def menu_historico_medico(self):
+    @staticmethod
+    def menu_historico_medico():
         opcoes = {
-            "1": ("Adicionar médico/funcionário ao sistema", self.adicionar_funcionario_historico),
-            "2": ("Registrar atendimento médico", self.registrar_atendimento_historico),
-            "3": ("Ver histórico de um paciente", self.ver_historico_paciente),
-            "4": ("Ver pacientes atendidos por funcionário", self.ver_pacientes_funcionario),
-            "5": ("Ver todos os históricos registrados", self.listar_todos_historicos),
+            "1": ("Adicionar médico/funcionário ao sistema", InterfaceHospital.adicionar_funcionario_historico),
+            "2": ("Registrar atendimento médico", InterfaceHospital.registrar_atendimento_historico),
+            "3": ("Ver histórico de um paciente", InterfaceHospital.ver_historico_paciente),
+            "4": ("Ver pacientes atendidos por funcionário", InterfaceHospital.ver_pacientes_funcionario),
+            "5": ("Ver todos os históricos registrados", InterfaceHospital.listar_todos_historicos),
         }
-        self.exibir_menu_generico("Histórico médico", opcoes)
+        InterfaceHospital.exibir_menu_generico("Histórico médico", opcoes)
 
-    def adicionar_funcionario_historico(self):
+    @staticmethod
+    def adicionar_funcionario_historico():
         print("\nAdicionar medico/funcionario ao historico:")
 
-        if not self.sistema.funcionarios:
+        if not SistemaHospital.funcionarios:
             print("Nenhum funcionário registrado no sistema!")
             return
 
-        funcionario = self.selecionar_funcionario("Funcionários disponíveis:")
+        funcionario = InterfaceHospital.selecionar_funcionario("Funcionários disponíveis:")
         if not funcionario:
             return
 
@@ -1148,14 +1194,15 @@ class InterfaceHospital:
         else:
             print("Erro ao adicionar funcionário!")
 
-    def registrar_atendimento_historico(self):
+    @staticmethod
+    def registrar_atendimento_historico():
         print("\nRegistrar atendimento medico:")
 
         if not SistemaHospital.Funcionarios:
             print("Nenhum médico registrado no histórico!")
             return
 
-        if not self.sistema.pacientes:
+        if not SistemaHospital.pacientes:
             print("Nenhum paciente registrado no sistema!")
             return
 
@@ -1182,7 +1229,7 @@ class InterfaceHospital:
                 print("Opção inválida!")
                 return
 
-            paciente = self.selecionar_paciente()
+            paciente = InterfaceHospital.selecionar_paciente()
             if not paciente:
                 return
 
@@ -1200,15 +1247,16 @@ class InterfaceHospital:
         
         except ValueError:
             print("Valor inválido!")
-        
-    def ver_historico_paciente(self):
+    
+    @staticmethod
+    def ver_historico_paciente():
         print("\nVer historico de paciente:")
 
-        if not self.sistema.pacientes:
+        if not SistemaHospital.pacientes:
             print("Nenhum paciente registrado!")
             return
 
-        paciente = self.selecionar_paciente()
+        paciente = InterfaceHospital.selecionar_paciente()
         if not paciente:
             return
 
@@ -1228,7 +1276,8 @@ class InterfaceHospital:
         except ValueError:
             print("Valor inválido!")
 
-    def ver_pacientes_funcionario(self):
+    @staticmethod
+    def ver_pacientes_funcionario():
         print("\nVer pacientes atendidos por funcionario:")
 
         if not SistemaHospital.Funcionarios:
@@ -1282,21 +1331,24 @@ class InterfaceHospital:
         except ValueError:
             print("Valor inválido!")
 
-    def listar_todos_historicos(self):
+    @staticmethod
+    def listar_todos_historicos():
         print(SistemaHospital.listar_todos_historicos())
 
-    def menu_horarios(self):
+    @staticmethod
+    def menu_horarios():
         opcoes = {
-            "1": ("Visualizar horário semanal de um funcionário", self.ver_horario_semanal),
-            "2": ("Visualizar horário mensal de um funcionário", self.ver_horario_mensal_detalhado),
-            "3": ("Editar horário semanal de um funcionário", self.editar_horario_semanal),
-            "4": ("Definir horário específico para um dia", self.definir_horario_especifico),
-            "5": ("Ver registos de ponto de um funcionário", self.ver_registos_ponto),
+            "1": ("Visualizar horário semanal de um funcionário", InterfaceHospital.ver_horario_semanal),
+            "2": ("Visualizar horário mensal de um funcionário", InterfaceHospital.ver_horario_mensal_detalhado),
+            "3": ("Editar horário semanal de um funcionário", InterfaceHospital.editar_horario_semanal),
+            "4": ("Definir horário específico para um dia", InterfaceHospital.definir_horario_especifico),
+            "5": ("Ver registos de ponto de um funcionário", InterfaceHospital.ver_registos_ponto),
         }
-        self.exibir_menu_generico("Gestão de Horários", opcoes)
+        InterfaceHospital.exibir_menu_generico("Gestão de Horários", opcoes)
 
-    def ver_horario_semanal(self):
-        func = self.selecionar_funcionario()
+    @staticmethod
+    def ver_horario_semanal():
+        func = InterfaceHospital.selecionar_funcionario()
         if not func:
             return
 
@@ -1330,13 +1382,14 @@ class InterfaceHospital:
         print(f"Tempo diurno: {formatar_timedelta(totais['diurno'])}")
         print(f"Tempo noturno: {formatar_timedelta(totais['noturno'])}\n")
 
-    def ver_horario_mensal_detalhado(self):
-        funcionario = self.selecionar_funcionario()
+    @staticmethod
+    def ver_horario_mensal_detalhado():
+        funcionario = InterfaceHospital.selecionar_funcionario()
         if not funcionario:
             return
 
         try:
-            mes, ano = self.obter_mes_ano()
+            mes, ano = InterfaceHospital.obter_mes_ano()
             
             horario_mensal = funcionario.horario_funcionario.obter_horario_mensal(mes, ano)
             detalhes_diarios = horario_mensal.obter_dados_diarios()
@@ -1378,8 +1431,9 @@ class InterfaceHospital:
         except (ValueError, IndexError):
             print("Valor inválido!")
         
-    def editar_horario_semanal(self):
-        funcionario = self.selecionar_funcionario()
+    @staticmethod
+    def editar_horario_semanal():
+        funcionario = InterfaceHospital.selecionar_funcionario()
         if not funcionario:
             return
 
@@ -1457,15 +1511,16 @@ class InterfaceHospital:
         except (ValueError, IndexError):
             print(f"Valor inválido!")
         
-    def definir_horario_especifico(self):
-        funcionario = self.selecionar_funcionario()
+    @staticmethod
+    def definir_horario_especifico():
+        funcionario = InterfaceHospital.selecionar_funcionario()
         if not funcionario:
             return
 
         try:
             print("\nDefina a data para o horário específico:")
             dia = int(input("Dia: "))
-            mes_ano = self.obter_mes_ano()
+            mes_ano = InterfaceHospital.obter_mes_ano()
 
             data_especifica = date(mes_ano[1], mes_ano[0], dia)
 
@@ -1508,9 +1563,10 @@ class InterfaceHospital:
 
         except (ValueError, IndexError):
             print(f"Valor inválido!")
-        
-    def registar_ponto(self):
-        funcionario = self.selecionar_funcionario()
+
+    @staticmethod
+    def registar_ponto():
+        funcionario = InterfaceHospital.selecionar_funcionario()
         if not funcionario:
             return
 
@@ -1521,7 +1577,7 @@ class InterfaceHospital:
             data_ponto = date.today()
 
             if dia_input:
-                mes_ano = self.obter_mes_ano()
+                mes_ano = InterfaceHospital.obter_mes_ano()
                 data_ponto = date(mes_ano[1], mes_ano[0], int(dia_input))
             
             print(f"\nData: {data_ponto.strftime('%d/%m/%Y')}")
@@ -1605,13 +1661,14 @@ class InterfaceHospital:
         except (ValueError, IndexError):
             print(f"Valor inválido!")
 
-    def ver_registos_ponto(self):
-        funcionario = self.selecionar_funcionario()
+    @staticmethod
+    def ver_registos_ponto():
+        funcionario = InterfaceHospital.selecionar_funcionario()
         if not funcionario:
             return
 
         try:
-            mes_ano = self.obter_mes_ano()
+            mes_ano = InterfaceHospital.obter_mes_ano()
             mes = mes_ano[0]
             ano = mes_ano[1]
             registros = funcionario.listar_registros_ponto_mes(mes, ano)
@@ -1631,8 +1688,7 @@ class InterfaceHospital:
 if __name__ == "__main__":
     try:
         print("\nBem-vindo ao Sistema Hospitalar!")
-        interface = InterfaceHospital()
-        interface.inicializar_dados_padrao()
+        InterfaceHospital.inicializar_dados()
     except KeyboardInterrupt:
         limpar_console()
         linhas_vazias()
