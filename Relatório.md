@@ -246,7 +246,7 @@ Implementação Polimórfica (detalhar_sala): A implementação deste método pa
 3.1.9. Classe Orquestradora: SistemaHospital
 A classe SistemaHospital é o ponto central de controlo de toda a aplicação. Gerindo os dados em memória.
 
-1. Gestão Centralizada de Dados em Memória
+Gestão Centralizada de Dados em Memória
 
 A principal função da SistemaHospital é gerir a interação entre as variáveis/Classes do sistema.
 
@@ -256,7 +256,7 @@ self.funcionarios: Usa o número de funcionário como chave, facilitando a gest�
 self.salas_espera e self.salas_cirurgia: Indexam as salas pelo seu nome, o que é mais intuitivo para as operações do utilizador.
 Controlo de Identidade: A classe assume a responsabilidade pela geração de identificadores únicos para os pacientes através do atributo _proximo_numero_utente. Separar este contador, a SistemaHospital garante que não haverá repetições de identificadores durante a criação de novos pacientes.
 
-2. Interface Simplificada
+Interface Simplificada
 
 Criação de Entidades (Padrão Factory Simples):
 registrar_paciente: Este método pode funcionar tanto com a variável ddo paciente tanto com os dados.
@@ -265,30 +265,27 @@ Recuperação e Interação:
 obter_paciente e obter_funcionario: Fornecem um ponto de acesso único aos dados. A lógica de formatação do número de utente em obter_paciente está aqui centralizada, garantindo consistência.
 gerar_relatorio_funcionario e gerar_relatorio_paciente: Estes métodos são uma demonstração do uso de polimorfismo a partir de uma classe gestora. A SistemaHospital não contém nenhuma lógica condicional para verificar o tipo de funcionário (Medico, EnfermeiroChefe, etc.). Ela confia no contrato estabelecido pela classe Pessoa, que obriga todas as subclasses a implementar o método __str__. Ao invocar str(funcionario), o Python seleciona a implementação correta do método, resultando num código mais limpo e extensível.
 
+
 4. Conclusão
-4.1. O que foi feito
-Este projeto resultou num programa de gestão hospitalar que funciona, onde aplicámos os conhecimentos da disciplina de Programação e Sistemas de Informação. Conseguimos cumprir os objetivos principais e o código ficou bem organizado.
+4.1. Sumário da Implementação
+Este projeto resultou na implementação de um protótipo funcional de um sistema de informação para gestão hospitalar, cumprindo os objetivos definidos na diciplina de Programação e Sistemas de Informação. Sendo um projeto funcional, completo e modular.
 
-As ideias principais que usámos foram:
+Os principais resultados da implementação foram:
 
-Criámos modelos base para as pessoas e para as salas, para garantir que todos seguiam uma estrutura comum.
-Aproveitámos código já existente para criar especializações, como um Medico que é um tipo de Funcionario, e para juntar responsabilidades, como no caso do EnfermeiroChefe.
-O sistema consegue lidar com diferentes tipos de funcionários e objetos de forma igual, e cada um sabe como se apresentar de forma diferente.
-Protegemos os dados para evitar valores inválidos, como por exemplo, garantir que uma idade não pode ser negativa.
-O código foi separado em ficheiros diferentes (Program.py, Horario.py, Console.py) para dividir as responsabilidades: um para a lógica, um para os horários e outro para a interação com o utilizador. Isto tornou o projeto mais limpo.
-4.2. Desafios e o que aprendemos
-Este foi um trabalho para aprender e aplicar os conceitos de PSI. Por isso, não usámos bases de dados nem interfaces gráficas, para nos focarmos apenas na lógica do programa, que era o objetivo.
+Modelação de Dados: Foram definidas as estruturas de dados centrais do sistema (Pessoa, Sala), que serviram como base para representar a informação do domínio do problema de forma consistente.
+Reutilização e Especialização: Foram aplicadas técnicas de programação para especializar as estruturas de dados base (ex: um Medico é uma forma especializada de Funcionario), otimizando a reutilização de código.
+Segmentação Funcional: O código-fonte foi organizado em módulos com responsabilidades distintas (Program.py para a lógica de negócio, Horario.py para a lógica da gestão do tempo e Console.py para a interface com o utilizador), separando as diferentes funções do sistema.
 
-Um dos desafios foi a classe EnfermeiroChefe, porque tivemos de juntar características de Enfermeiro e de Administrativo e fazer tudo funcionar bem.
+4.2. Desafios e Aprendizagens
+O desenvolvimento focou-se em criar um sistema modular e detalhado. Os principais desafios e aprendizagens foram:
 
-Outro grande desafio foi o módulo de horários (Horario.py), porque lidar com tempo, durações e turnos que passam da meia-noite é complicado. A solução foi dividir o problema em partes mais pequenas.
+Composição das classes: A criação da entidade EnfermeiroChefe, que agrega atributos e funcionalidades de duas outras entidades distintas, exigiu uma solução cuidada na sua inicialização para assegurar a consistência dos dados resultantes.
+Complexidade da Lógica Temporal: A implementação do módulo de gestão de horários (Horario.py) representou um desafio significativo devido à complexidade inerente ao cálculo de durações e intervalos, especialmente em cenários que envolviam a transição da meia-noite.
 
-Por fim, foi uma boa aprendizagem gerir ao mesmo tempo os dados que acontecem em tempo real no sistema e os dados que ficam guardados no histórico.
+4.3. Propostas de Evolução
+A base funcional implementada permite a evolução do sistema em diversas frentes:
 
-4.3. O que pode ser feito a seguir
-Com a base que já temos, o projeto pode ser melhorado no futuro com as seguintes ideias:
-
-Guardar os Dados: Fazer com que o programa guarde as informações em ficheiros ou numa base de dados, para não se perder tudo quando se fecha a aplicação.
-Melhorar a Interface: Criar uma interface com botões e janelas para ser mais fácil de usar, ou uma API para que outros sistemas se possam ligar ao nosso.
-Fazer Testes Automáticos: Adicionar testes ao código para garantir que tudo funciona como esperado e que futuras alterações não estragam nada.
-Reorganizar o Código do Histórico: A forma como o histórico é guardado deixa as partes do código muito ligadas umas às outras. Podíamos mudar isso para tornar o sistema mais flexível e fácil de testar.
+Implementação de Persistência de Dados: Usar um sistema de armazenamento de dados de forma permanente (ex: em ficheiros estruturados como JSON ou numa base de dados como SQLite), garantindo a sua durabilidade entre utilizações.
+Evolução da Camada de Apresentação: Desenvolver uma interface gráfica para o utilizador para simplificar a interação, ou reaproveitar a lógica para uma versão web.
+Testes automatizados: Construir um conjunto de testes automatizados para validar a correção funcional do sistema de forma contínua, assegurando que futuras modificações não introduzam regressões.
+Refatoração para Redução do Acoplamento: A forma como o módulo de histórico acede à informação gera uma forte dependência entre os componentes do sistema. Propõe-se uma refatoração para que as dependências sejam geridas de forma explícita, o que aumentaria o isolamento dos módulos e a sua testabilidade.
