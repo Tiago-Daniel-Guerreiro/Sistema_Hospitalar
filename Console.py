@@ -10,6 +10,10 @@ from Horario import (
     formatar_timedelta, FuncionarioHorario
 )
 
+def mensagem_box_debug(mensagem: str, titulo: str):
+    import ctypes  # An included library with Python install.
+    ctypes.windll.user32.MessageBoxW(0, mensagem, titulo, 1)
+
 def aguardar_e_limpar():
     input("\nPressione Enter para continuar...")
     limpar_console()
